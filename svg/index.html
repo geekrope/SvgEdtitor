@@ -7,7 +7,11 @@
     </script>    
 </head>
 <body>
-    <button onclick="new Ellipse('parent');"></button>
+    <button onclick="
+    var ellipse = new Ellipse('parent');
+    var grid = new TransformGrid('parent');
+    grid.SetChild(ellipse);
+    "></button>
     <svg id="parent" width="2560" height="1440"></svg>
 </body>
 </html>
