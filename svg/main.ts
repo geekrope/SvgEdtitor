@@ -18,6 +18,7 @@ interface ScaleAble {
 	Translate(x: number, y: number): void;
 	GetOriginalWidth(): number;
 	scaleX: number;
+	center: Point;
 	scaleY: number;
 	GetOriginalHeight(): number;
 	GetAbsolutePosition(): Point;
@@ -54,7 +55,7 @@ class TransformGrid {
 	scaleYClickPoint = new Point(0, 0);
 	scaleAllClickPoint = new Point(0, 0);
 	adornerA = 10;
-	adornerColor = "#404040";
+	adornerColor = "#53b6ee";
 	child?: ScaleAble;
 	set translateClickPoint(point: Point) {
 		this._translateClickPoint = point;
@@ -66,7 +67,9 @@ class TransformGrid {
 		const adorner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 		adorner.setAttribute("width", this.adornerA.toString());
 		adorner.setAttribute("height", this.adornerA.toString());
-		adorner.setAttribute("fill", this.adornerColor);
+		adorner.setAttribute("fill", "#ffffff");
+		adorner.setAttribute("stroke", this.adornerColor);
+		adorner.setAttribute("stroke-width", this.strokeWidth.toString());
 		adorner.id = id;
 		return adorner;
 	}
@@ -95,7 +98,7 @@ class TransformGrid {
 			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
 		}).bind(this));
 		parentElement?.addEventListener("mousemove", this.Transform.bind(this));
-		parentElement?.addEventListener("mouseup", this.Reset.bind(this));		
+		parentElement?.addEventListener("mouseup", this.Reset.bind(this));
 		let stroke = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 		stroke.id = this.Stroke;
 		stroke.setAttribute("stroke", this.adornerColor);
@@ -107,7 +110,7 @@ class TransformGrid {
 		group.appendChild(translate);
 		group.appendChild(scaleX);
 		group.appendChild(scaleY);
-		group.appendChild(scale);		
+		group.appendChild(scale);
 		parentElement?.appendChild(group);
 	}
 	private Transform(e: MouseEvent): void {
@@ -116,7 +119,7 @@ class TransformGrid {
 		this.ScaleYAxes(e);
 		this.ScaleAllAxes(e);
 	}
-	private Reset():void {
+	private Reset(): void {
 		this.moving = false;
 		this.scalingX = false;
 		this.scalingY = false;
@@ -216,6 +219,7 @@ class Ellipse implements ScaleAble {
 	public scaleY = 1;
 	rotateAngle: number;
 	parent: string;
+	public center: Point;
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
 		assert(element);
@@ -230,17 +234,18 @@ class Ellipse implements ScaleAble {
 			element.setAttribute("transform", `matrix(
 ${GlobalScale * Math.cos(this.rotateAngle)},
 ${GlobalScale * Math.sin(this.rotateAngle)},
-${GlobalScale * Math.sin(this.rotateAngle)},
+${GlobalScale * -Math.sin(this.rotateAngle)},
 ${GlobalScale * Math.cos(this.rotateAngle)},
-0,
-0)`);
+${this.center.X - (this.center.X * Math.cos(this.rotateAngle) - this.center.Y * Math.sin(this.rotateAngle))},
+${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * Math.sin(this.rotateAngle))})`);
 		}
 	}
+
 	constructor(parent: string) {
 		this.parent = parent;
 		this.id = "el" + ElementIndex;
 		const element = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-		element.id = this.id;
+		element.id = this.id;		
 		const parentElement = document.getElementById(parent);
 		if (parentElement) {
 			parentElement.appendChild(element);
@@ -252,7 +257,8 @@ ${GlobalScale * Math.cos(this.rotateAngle)},
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 1;
-		this.rotateAngle = 0;
+		this.rotateAngle = Math.PI/4;
+		this.center = new Point(this.cx, this.cy);
 		this.Refresh();
 	}
 	public Delete(): void {
@@ -268,7 +274,8 @@ ${GlobalScale * Math.cos(this.rotateAngle)},
 		this.scaleX = value * GlobalScale;
 		var deltaX = this.width / 2 - (this.cx - pos.X);
 		this.cx += deltaX;
-		this.Refresh();
+		this.Refresh();		
+		this.center = new Point(this.cx, this.cy);
 	}
 	public ScaleY(value: number): void {
 		let pos = this.GetAbsolutePosition();
@@ -276,18 +283,19 @@ ${GlobalScale * Math.cos(this.rotateAngle)},
 		this.scaleY = value * GlobalScale;
 		var deltaY = this.height / 2 - (this.cy - pos.Y);
 		this.cy += deltaY;
-		this.Refresh();
+		this.Refresh();		
+		this.center = new Point(this.cx, this.cy);
 	}
 	//angle in degrees
 	public Rotate(angle: number): void {
 		const angleInRad = Math.PI * angle / 180.0;
 		this.rotateAngle = angleInRad;
-		this.Refresh();
+		this.Refresh();		
 	}
 	public Translate(x: number, y: number): void {
 		this.cx += x;
 		this.cy += y;
-		this.Refresh();
+		this.Refresh();		
 	}
 	public GetOriginalWidth(): number {
 		return DefaultA;
