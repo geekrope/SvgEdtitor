@@ -16,10 +16,10 @@ interface ScaleAble {
 	ScaleY(value: number): void;
 	Rotate(angle: number): void;
 	Translate(x: number, y: number): void;
-	GetWidth(): number;
+	GetOriginalWidth(): number;
 	scaleX: number;
 	scaleY: number;
-	GetHeight(): number;
+	GetOriginalHeight(): number;
 	GetAbsolutePosition(): Point;
 }
 class Point {
@@ -45,8 +45,14 @@ class TransformGrid {
 	width = 0;
 	height = 0;
 	strokeWidth = 2;
-	moving:boolean = false;
+	moving: boolean = false;
+	scalingX: boolean = false;
+	scalingY: boolean = false;
+	multiScaling: boolean = false;
 	_translateClickPoint = new Point(0, 0);
+	scaleXClickPoint = new Point(0, 0);
+	scaleYClickPoint = new Point(0, 0);
+	scaleAllClickPoint = new Point(0, 0);
 	adornerA = 10;
 	adornerColor = "#404040";
 	child?: ScaleAble;
@@ -68,16 +74,28 @@ class TransformGrid {
 		this.parent = parent;
 		this.child = undefined;
 		let translate = this.CreateAdorner(this.Translate);
+		let scaleX = this.CreateAdorner(this.ScaleX);
+		let scaleY = this.CreateAdorner(this.ScaleY);
+		let scale = this.CreateAdorner(this.MultiScale);
 		const parentElement = document.getElementById(parent);
 		translate.addEventListener("mousedown", ((e: MouseEvent) => {
 			this.moving = true;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 		}).bind(this));
+		scaleX.addEventListener("mousedown", ((e: MouseEvent) => {
+			this.scalingX = true;
+			this.scaleXClickPoint = new Point(e.offsetX, e.offsetY);
+		}).bind(this));
+		scaleY.addEventListener("mousedown", ((e: MouseEvent) => {
+			this.scalingY = true;
+			this.scaleYClickPoint = new Point(e.offsetX, e.offsetY);
+		}).bind(this));
+		scale.addEventListener("mousedown", ((e: MouseEvent) => {
+			this.multiScaling = true;
+			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
+		}).bind(this));
 		parentElement?.addEventListener("mousemove", this.Transform.bind(this));
-		parentElement?.addEventListener("mouseup", this.Reset.bind(this));
-		let scaleX = this.CreateAdorner(this.ScaleX);
-		let scaleY = this.CreateAdorner(this.ScaleY);
-		let scale = this.CreateAdorner(this.MultiScale);
+		parentElement?.addEventListener("mouseup", this.Reset.bind(this));		
 		let stroke = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 		stroke.id = this.Stroke;
 		stroke.setAttribute("stroke", this.adornerColor);
@@ -94,9 +112,15 @@ class TransformGrid {
 	}
 	private Transform(e: MouseEvent): void {
 		this.TranslateTransform(e);
+		this.ScaleXAxes(e);
+		this.ScaleYAxes(e);
+		this.ScaleAllAxes(e);
 	}
 	private Reset():void {
 		this.moving = false;
+		this.scalingX = false;
+		this.scalingY = false;
+		this.multiScaling = false;
 	}
 	private TranslateTransform(e: MouseEvent): void {
 		if (this.moving) {
@@ -109,10 +133,50 @@ class TransformGrid {
 			this.Refresh();
 		}
 	}
+	private ScaleXAxes(e: MouseEvent): void {
+		if (this.scalingX) {
+			var deltaX = e.offsetX - this.scaleXClickPoint.X;
+			this.width += deltaX;
+			if (this.child) {
+				this.scaleX = this.width / this.child.GetOriginalWidth();
+			}
+			this.scaleXClickPoint = new Point(e.offsetX, e.offsetY);
+			this.child?.ScaleX(this.scaleX);
+			this.Refresh();
+		}
+	}
+	private ScaleYAxes(e: MouseEvent): void {
+		if (this.scalingY) {
+			var deltaY = e.offsetY - this.scaleYClickPoint.Y;
+			this.height += deltaY;
+			if (this.child) {
+				this.scaleY = this.height / this.child.GetOriginalHeight();
+			}
+			this.scaleYClickPoint = new Point(e.offsetX, e.offsetY);
+			this.child?.ScaleY(this.scaleY);
+			this.Refresh();
+		}
+	}
+	private ScaleAllAxes(e: MouseEvent): void {
+		if (this.multiScaling) {
+			var deltaY = e.offsetY - this.scaleAllClickPoint.Y;
+			this.height += deltaY;
+			var deltaX = e.offsetX - this.scaleAllClickPoint.X;
+			this.width += deltaX;
+			if (this.child) {
+				this.scaleY = this.height / this.child.GetOriginalHeight();
+				this.scaleX = this.width / this.child.GetOriginalWidth();
+			}
+			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
+			this.child?.ScaleY(this.scaleY);
+			this.child?.ScaleX(this.scaleX);
+			this.Refresh();
+		}
+	}
 	public SetChild(element: ScaleAble): void {
 		this.child = element;
-		this.width = element.GetWidth() * element.scaleX;
-		this.height = element.GetHeight() * element.scaleY;
+		this.width = element.GetOriginalWidth() * element.scaleX;
+		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
 		this.scaleY = element.scaleY;
 		this.translatePoint = element.GetAbsolutePosition();
@@ -199,13 +263,19 @@ ${GlobalScale * Math.cos(this.rotateAngle)},
 		}
 	}
 	public ScaleX(value: number): void {
-		this.width *= value;
+		let pos = this.GetAbsolutePosition();
+		this.width = DefaultA * value;
 		this.scaleX = value * GlobalScale;
+		var deltaX = this.width / 2 - (this.cx - pos.X);
+		this.cx += deltaX;
 		this.Refresh();
 	}
 	public ScaleY(value: number): void {
-		this.height *= value;
+		let pos = this.GetAbsolutePosition();
+		this.height = DefaultA * value;
 		this.scaleY = value * GlobalScale;
+		var deltaY = this.height / 2 - (this.cy - pos.Y);
+		this.cy += deltaY;
 		this.Refresh();
 	}
 	//angle in degrees
@@ -219,10 +289,10 @@ ${GlobalScale * Math.cos(this.rotateAngle)},
 		this.cy += y;
 		this.Refresh();
 	}
-	public GetWidth(): number {
+	public GetOriginalWidth(): number {
 		return DefaultA;
 	}
-	public GetHeight(): number {
+	public GetOriginalHeight(): number {
 		return DefaultA;
 	}
 	public GetAbsolutePosition(): Point {
