@@ -14,6 +14,19 @@ function assert(condition: any, msg?: string): asserts condition {
 		throw new Error(alert_message);
 	}
 }
+function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
+	var a = mtrx.a;
+	var b = mtrx.b;
+	var c = mtrx.c;
+	var d = mtrx.d;
+	var e = mtrx.e;
+	var f = mtrx.f;
+	var x1 = transformed.X;
+	var y1 = transformed.Y;
+	var y = (((b) / a) * x1 - y1 + f - ((b * e) / a)) / ((b * c - d * a) / a);
+	var x = (1 / a) * (x1 - c * y - e);
+	return new Point(x, y);
+}
 interface ScaleAble {
 	ScaleX(value: number): void;
 	ScaleY(value: number): void;
@@ -22,6 +35,7 @@ interface ScaleAble {
 	GetOriginalWidth(): number;
 	scaleX: number;
 	center: Point;
+	rotateAngle: number;
 	points: Point[];
 	scaleY: number;
 	GetOriginalHeight(): number;
@@ -141,8 +155,18 @@ class TransformGrid {
 		}
 	}
 	private ScaleXAxes(e: MouseEvent): void {
-		if (this.scalingX) {
-			var deltaX = e.offsetX - this.scaleXClickPoint.X;
+		if (this.scalingX && this.child) {
+			var matrix = new DOMMatrix([
+				Math.cos(this.child.rotateAngle),
+				Math.sin(this.child.rotateAngle),
+				-Math.sin(this.child.rotateAngle),
+				Math.cos(this.child.rotateAngle),
+				0,
+				0
+			]);
+			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleXClickPoint);
+			var deltaX = point.X - scaleXClickPointNew.X;
 			this.width += deltaX;
 			if (this.child) {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
@@ -153,8 +177,18 @@ class TransformGrid {
 		}
 	}
 	private ScaleYAxes(e: MouseEvent): void {
-		if (this.scalingY) {
-			var deltaY = e.offsetY - this.scaleYClickPoint.Y;
+		if (this.scalingY && this.child) {
+			var matrix = new DOMMatrix([
+				Math.cos(this.child.rotateAngle),
+				Math.sin(this.child.rotateAngle),
+				-Math.sin(this.child.rotateAngle),
+				Math.cos(this.child.rotateAngle),
+				0,
+				0
+			]);
+			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleYClickPoint);
+			var deltaY = point.Y - scaleXClickPointNew.Y;
 			this.height += deltaY;
 			if (this.child) {
 				this.scaleY = this.height / this.child.GetOriginalHeight();
@@ -165,10 +199,20 @@ class TransformGrid {
 		}
 	}
 	private ScaleAllAxes(e: MouseEvent): void {
-		if (this.multiScaling) {
-			var deltaY = e.offsetY - this.scaleAllClickPoint.Y;
+		if (this.multiScaling && this.child) {
+			var matrix = new DOMMatrix([
+				Math.cos(this.child.rotateAngle),
+				Math.sin(this.child.rotateAngle),
+				-Math.sin(this.child.rotateAngle),
+				Math.cos(this.child.rotateAngle),
+				0,
+				0
+			]);
+			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleAllClickPoint);
+			var deltaY = point.Y - scaleXClickPointNew.Y;
 			this.height += deltaY;
-			var deltaX = e.offsetX - this.scaleAllClickPoint.X;
+			var deltaX = point.X - scaleXClickPointNew.X;
 			this.width += deltaX;
 			if (this.child) {
 				this.scaleY = this.height / this.child.GetOriginalHeight();
@@ -252,8 +296,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.TransformPoints();
 	}
 
-	private SetCenter(): void {		
-		this.center = new Point(0,0);		
+	private SetCenter(): void {
+		this.center = new Point(0, 0);
 	}
 
 	private SetPointsToDefault(): void {
@@ -300,9 +344,9 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 1;
-		this.rotateAngle = Math.PI / 4;
+		this.rotateAngle = Math.PI / 18;
 		this.center = new Point(this.cx, this.cy);
-		this.Refresh();
+		this.Refresh();		
 	}
 	public Delete(): void {
 		const parentElement = document.getElementById(this.parent);
@@ -316,16 +360,16 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.width = DefaultA * value;
 		this.scaleX = value * GlobalScale;
 		var deltaX = this.width / 2 - (this.cx - pos.X);
-		this.offsetX += deltaX;
-		this.Refresh();		
+		//this.offsetX += deltaX;
+		this.Refresh();
 	}
 	public ScaleY(value: number): void {
 		let pos = this.GetAbsolutePosition();
 		this.height = DefaultA * value;
 		this.scaleY = value * GlobalScale;
 		var deltaY = this.height / 2 - (this.cy - pos.Y);
-		this.offsetY += deltaY;
-		this.Refresh();		
+		//this.offsetY += deltaY;
+		this.Refresh();
 	}
 	//angle in degrees
 	public Rotate(angle: number): void {
@@ -336,7 +380,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	public Translate(x: number, y: number): void {
 		this.offsetX += x;
 		this.offsetY += y;
-		this.Refresh();		
+		this.Refresh();
 	}
 	public GetOriginalWidth(): number {
 		return DefaultA;
