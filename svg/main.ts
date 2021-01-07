@@ -356,19 +356,23 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		}
 	}
 	public ScaleX(value: number): void {
-		let pos = this.GetAbsolutePosition();
+		let translPoint = this.points[0];		
 		this.width = DefaultA * value;
-		this.scaleX = value * GlobalScale;
-		var deltaX = this.width / 2 - (this.cx - pos.X);
-		//this.offsetX += deltaX;
+		this.scaleX = value * GlobalScale;	
+		this.SetPointsToDefault();
+		this.TransformPoints();
+		this.offsetY += translPoint.Y - this.points[0].Y;
+		this.offsetX += translPoint.X - this.points[0].X;
 		this.Refresh();
 	}
 	public ScaleY(value: number): void {
-		let pos = this.GetAbsolutePosition();
+		let translPoint = this.points[0];	
 		this.height = DefaultA * value;
 		this.scaleY = value * GlobalScale;
-		var deltaY = this.height / 2 - (this.cy - pos.Y);
-		//this.offsetY += deltaY;
+		this.SetPointsToDefault();
+		this.TransformPoints();
+		this.offsetY += translPoint.Y - this.points[0].Y;
+		this.offsetX += translPoint.X - this.points[0].X;
 		this.Refresh();
 	}
 	//angle in degrees
