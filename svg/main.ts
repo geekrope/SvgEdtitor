@@ -168,7 +168,7 @@ class TransformGrid {
 	}
 	private RotateTransform(e: MouseEvent): void {
 		if (this.rotating && this.child) {
-			var angleNew = Math.atan2(e.offsetY - this.child.offsetX, e.offsetX - this.child.offsetY)-Math.PI/2;
+			var angleNew = Math.atan2(e.offsetY - this.child.offsetY, e.offsetX - this.child.offsetX)+Math.PI/2;
 			this.child?.Rotate(angleNew);
 			this.Refresh();
 		}
@@ -260,16 +260,28 @@ class TransformGrid {
 		let stroke = document.getElementById(this.Stroke);
 		let rotate = document.getElementById(this.Rotate);
 		if (this.child) {
+			var originalPoint = new Point(0, -DefaultA / 2);
+			var matrix = new DOMMatrix([
+				Math.cos(this.child.rotateAngle) * this.scaleX,
+				Math.sin(this.child.rotateAngle) * this.scaleX,
+				-Math.sin(this.child.rotateAngle) * this.scaleY,
+				Math.cos(this.child.rotateAngle) * this.scaleY,
+				this.translatePoint.X,
+				this.translatePoint.Y
+			]);
 			scaleX?.setAttribute("x", (this.child.points[1].X - this.adornerA / 2).toString());
 			scale?.setAttribute("x", (this.child.points[2].X - this.adornerA / 2).toString());
 			scaleY?.setAttribute("x", (this.child.points[3].X - this.adornerA / 2).toString());
 			translate?.setAttribute("x", (this.child.points[0].X - this.adornerA / 2).toString());
-			rotate?.setAttribute("x", (this.translatePoint.X + (this.width + 15) * Math.cos(this.child.rotateAngle - Math.PI / 2)).toString());
+
+			rotate?.setAttribute("x", (originalPoint.X * matrix.a + originalPoint.Y * matrix.c + matrix.e).toString());
+
 			scaleX?.setAttribute("y", (this.child.points[1].Y - this.adornerA / 2).toString());
 			translate?.setAttribute("y", (this.child.points[0].Y - this.adornerA / 2).toString());
 			scaleY?.setAttribute("y", (this.child.points[3].Y - this.adornerA / 2).toString());
 			scale?.setAttribute("y", (this.child.points[2].Y - this.adornerA / 2).toString());
-			rotate?.setAttribute("y", (this.translatePoint.Y + (this.height + 15) * Math.sin(this.child.rotateAngle-Math.PI/2)).toString());
+
+			rotate?.setAttribute("y", (originalPoint.X * matrix.b + originalPoint.Y * matrix.d + matrix.f).toString());
 		}
 
 		stroke?.setAttribute("points", `${this.child?.points[0].X},${this.child?.points[0].Y} 
