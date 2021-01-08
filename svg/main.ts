@@ -255,8 +255,7 @@ class TransformGrid {
 		let scale = document.getElementById(this.MultiScale);
 		let stroke = document.getElementById(this.Stroke);
 		let rotate = document.getElementById(this.Rotate);
-		if (this.child) {
-			//var originalPoint = new Point(0, -DefaultA / 2);
+		if (this.child) {		
 			let pos = new Point(-DefaultA / 2, -DefaultA / 2);			
 			var matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle) * this.scaleX,
@@ -370,7 +369,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.height = DefaultA;
 		this.fill = "none";
 		this.stroke = "black";
-		this.strokeWidth = 2;
+		this.strokeWidth = 4;
 		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
 		this.Refresh();		
@@ -505,7 +504,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.height = DefaultA;
 		this.fill = "none";
 		this.stroke = "black";
-		this.strokeWidth = 10;
+		this.strokeWidth = 4;
 		this.rotateAngle = 0;
 		this.center = new Point(0, 0);
 		this.SetCenter();
