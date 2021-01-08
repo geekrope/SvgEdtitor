@@ -334,7 +334,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 
 	private SetPointsToDefault(): void {
-		let pos = new Point(-DefaultA / 2, -DefaultA / 2);
+		let pos = new Point(-DefaultA/2, -DefaultA/2);
 		this.points[0] = pos;
 		this.points[1] = new Point(pos.X + DefaultA, pos.Y);
 		this.points[2] = new Point(pos.X + DefaultA, pos.Y + DefaultA);
@@ -463,7 +463,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 
 	private SetPointsToDefault(): void {
-		let pos = new Point(0, 0);
+		let pos = new Point(-DefaultA / 2, -DefaultA / 2);
 		this.points[0] = pos;
 		this.points[1] = new Point(pos.X + DefaultA, pos.Y);
 		this.points[2] = new Point(pos.X + DefaultA, pos.Y + DefaultA);
@@ -506,7 +506,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.height = DefaultA;
 		this.fill = "none";
 		this.stroke = "black";
-		this.strokeWidth = 1;
+		this.strokeWidth = 10;
 		this.rotateAngle = 0;
 		this.center = new Point(0, 0);
 		this.SetCenter();
@@ -525,8 +525,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.scaleX = value * GlobalScale;
 		this.SetPointsToDefault();
 		this.TransformPoints();
-		//this.offsetY += translPoint.Y - this.points[0].Y;
-		//this.offsetX += translPoint.X - this.points[0].X;
+		this.offsetY += translPoint.Y - this.points[0].Y;
+		this.offsetX += translPoint.X - this.points[0].X;
 		this.SetCenter();
 		this.Refresh();		
 	}
@@ -536,8 +536,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.scaleY = value * GlobalScale;
 		this.SetPointsToDefault();
 		this.TransformPoints();
-		//this.offsetY += translPoint.Y - this.points[0].Y;
-		//this.offsetX += translPoint.X - this.points[0].X;
+		this.offsetY += translPoint.Y - this.points[0].Y;
+		this.offsetX += translPoint.X - this.points[0].X;
 		this.SetCenter();
 		this.Refresh();
 	}
