@@ -59,8 +59,7 @@ class TransformGrid {
 	readonly Stroke: string = "Stroke";
 	readonly Rotate: string = "Rotate";
 	readonly MultiScale: string = "MultiScale";
-	parent: string;
-	translatePoint = new Point(0, 0);
+	parent: string;	
 	scaleX = 1;
 	scaleY = 1;
 	width = 0;
@@ -157,9 +156,7 @@ class TransformGrid {
 	private TranslateTransform(e: MouseEvent): void {
 		if (this.moving) {
 			var deltaX = e.offsetX - this.translateClickPoint.X;
-			var deltaY = e.offsetY - this.translateClickPoint.Y;
-			this.translatePoint.X += deltaX;
-			this.translatePoint.Y += deltaY;
+			var deltaY = e.offsetY - this.translateClickPoint.Y;			
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
 			this.Refresh();
@@ -191,7 +188,7 @@ class TransformGrid {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
 			}
 			this.scaleXClickPoint = new Point(e.offsetX, e.offsetY);
-			this.child?.ScaleX(this.scaleX);
+			this.child?.ScaleX(this.scaleX);			
 			this.Refresh();
 		}
 	}
@@ -248,8 +245,7 @@ class TransformGrid {
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
-		this.scaleY = element.scaleY;
-		this.translatePoint = new Point(this.child.offsetX, this.child.offsetY);
+		this.scaleY = element.scaleY;		
 		this.Refresh();
 	}
 	public Refresh(): void {
@@ -260,28 +256,31 @@ class TransformGrid {
 		let stroke = document.getElementById(this.Stroke);
 		let rotate = document.getElementById(this.Rotate);
 		if (this.child) {
-			var originalPoint = new Point(0, -DefaultA / 2);
+			//var originalPoint = new Point(0, -DefaultA / 2);
+			let pos = new Point(-DefaultA / 2, -DefaultA / 2);			
 			var matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle) * this.scaleX,
 				Math.sin(this.child.rotateAngle) * this.scaleX,
 				-Math.sin(this.child.rotateAngle) * this.scaleY,
 				Math.cos(this.child.rotateAngle) * this.scaleY,
-				this.translatePoint.X,
-				this.translatePoint.Y
+				this.child.center.X - (this.child.center.X * Math.cos(this.child.rotateAngle) - this.child.center.Y * Math.sin(this.child.rotateAngle)) + this.child.offsetX,
+				this.child.center.Y - (this.child.center.Y * Math.cos(this.child.rotateAngle) + this.child.center.X * Math.sin(this.child.rotateAngle)) + this.child.offsetY
 			]);
+			var point = new Point(pos.X * matrix.a + pos.Y * matrix.c + matrix.e, pos.X * matrix.b + pos.Y * matrix.d + matrix.f);
+			var pointRotated = new Point(point.X + Math.cos(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2, point.Y + Math.sin(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2);
 			scaleX?.setAttribute("x", (this.child.points[1].X - this.adornerA / 2).toString());
 			scale?.setAttribute("x", (this.child.points[2].X - this.adornerA / 2).toString());
 			scaleY?.setAttribute("x", (this.child.points[3].X - this.adornerA / 2).toString());
 			translate?.setAttribute("x", (this.child.points[0].X - this.adornerA / 2).toString());
 
-			rotate?.setAttribute("x", (originalPoint.X * matrix.a + originalPoint.Y * matrix.c + matrix.e - this.adornerA/2).toString());
+			rotate?.setAttribute("x", (pointRotated.X).toString());
 
 			scaleX?.setAttribute("y", (this.child.points[1].Y - this.adornerA / 2).toString());
 			translate?.setAttribute("y", (this.child.points[0].Y - this.adornerA / 2).toString());
 			scaleY?.setAttribute("y", (this.child.points[3].Y - this.adornerA / 2).toString());
 			scale?.setAttribute("y", (this.child.points[2].Y - this.adornerA / 2).toString());
 
-			rotate?.setAttribute("y", (originalPoint.X * matrix.b + originalPoint.Y * matrix.d + matrix.f - this.adornerA / 2).toString());
+			rotate?.setAttribute("y", (pointRotated.Y).toString());
 		}
 
 		stroke?.setAttribute("points", `${this.child?.points[0].X},${this.child?.points[0].Y} 
