@@ -401,8 +401,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetY += translPoint.Y - this.points[0].Y;
 		this.offsetX += translPoint.X - this.points[0].X;
 		this.Refresh();
-	}
-	//angle in degrees
+	}	
 	public Rotate(angle: number): void {
 		const angleInRad = angle;
 		this.rotateAngle = angleInRad;
@@ -540,8 +539,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetX += translPoint.X - this.points[0].X;
 		this.SetCenter();
 		this.Refresh();
-	}
-	//angle in degrees
+	}	
 	public Rotate(angle: number): void {
 		const angleInRad = angle;
 		this.rotateAngle = angleInRad;
