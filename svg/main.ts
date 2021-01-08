@@ -274,14 +274,14 @@ class TransformGrid {
 			scaleY?.setAttribute("x", (this.child.points[3].X - this.adornerA / 2).toString());
 			translate?.setAttribute("x", (this.child.points[0].X - this.adornerA / 2).toString());
 
-			rotate?.setAttribute("x", (originalPoint.X * matrix.a + originalPoint.Y * matrix.c + matrix.e).toString());
+			rotate?.setAttribute("x", (originalPoint.X * matrix.a + originalPoint.Y * matrix.c + matrix.e - this.adornerA/2).toString());
 
 			scaleX?.setAttribute("y", (this.child.points[1].Y - this.adornerA / 2).toString());
 			translate?.setAttribute("y", (this.child.points[0].Y - this.adornerA / 2).toString());
 			scaleY?.setAttribute("y", (this.child.points[3].Y - this.adornerA / 2).toString());
 			scale?.setAttribute("y", (this.child.points[2].Y - this.adornerA / 2).toString());
 
-			rotate?.setAttribute("y", (originalPoint.X * matrix.b + originalPoint.Y * matrix.d + matrix.f).toString());
+			rotate?.setAttribute("y", (originalPoint.X * matrix.b + originalPoint.Y * matrix.d + matrix.f - this.adornerA / 2).toString());
 		}
 
 		stroke?.setAttribute("points", `${this.child?.points[0].X},${this.child?.points[0].Y} 
