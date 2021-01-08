@@ -38,8 +38,9 @@ interface ScaleAble {
 	rotateAngle: number;
 	points: Point[];
 	scaleY: number;
-	GetOriginalHeight(): number;
-	GetAbsolutePosition(): Point;
+	GetOriginalHeight(): number;	
+	offsetX: number;
+	offsetY: number;
 }
 class Point {
 	X: number = 0;
@@ -56,6 +57,7 @@ class TransformGrid {
 	readonly ScaleX: string = "ScaleX";
 	readonly ScaleY: string = "ScaleY";
 	readonly Stroke: string = "Stroke";
+	readonly Rotate: string = "Rotate";
 	readonly MultiScale: string = "MultiScale";
 	parent: string;
 	translatePoint = new Point(0, 0);
@@ -67,11 +69,12 @@ class TransformGrid {
 	moving: boolean = false;
 	scalingX: boolean = false;
 	scalingY: boolean = false;
+	rotating: boolean = false;	
 	multiScaling: boolean = false;
 	_translateClickPoint = new Point(0, 0);
 	scaleXClickPoint = new Point(0, 0);
 	scaleYClickPoint = new Point(0, 0);
-	scaleAllClickPoint = new Point(0, 0);
+	scaleAllClickPoint = new Point(0, 0);	
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	child?: ScaleAble;
@@ -98,6 +101,7 @@ class TransformGrid {
 		let scaleX = this.CreateAdorner(this.ScaleX);
 		let scaleY = this.CreateAdorner(this.ScaleY);
 		let scale = this.CreateAdorner(this.MultiScale);
+		let rotate = this.CreateAdorner(this.Rotate);
 		const parentElement = document.getElementById(parent);
 		translate.addEventListener("mousedown", ((e: MouseEvent) => {
 			this.moving = true;
@@ -115,6 +119,9 @@ class TransformGrid {
 			this.multiScaling = true;
 			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
 		}).bind(this));
+		rotate.addEventListener("mousedown", ((e: MouseEvent) => {
+			this.rotating = true;			
+		}).bind(this));
 		parentElement?.addEventListener("mousemove", this.Transform.bind(this));
 		parentElement?.addEventListener("mouseup", this.Reset.bind(this));
 		let stroke = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
@@ -129,6 +136,7 @@ class TransformGrid {
 		group.appendChild(scaleX);
 		group.appendChild(scaleY);
 		group.appendChild(scale);
+		group.appendChild(rotate);
 		parentElement?.appendChild(group);
 	}
 	private Transform(e: MouseEvent): void {
@@ -136,12 +144,15 @@ class TransformGrid {
 		this.ScaleXAxes(e);
 		this.ScaleYAxes(e);
 		this.ScaleAllAxes(e);
+		this.RotateTransform(e);
 	}
+
 	private Reset(): void {
 		this.moving = false;
 		this.scalingX = false;
 		this.scalingY = false;
 		this.multiScaling = false;
+		this.rotating = false;
 	}
 	private TranslateTransform(e: MouseEvent): void {
 		if (this.moving) {
@@ -151,6 +162,14 @@ class TransformGrid {
 			this.translatePoint.Y += deltaY;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
+			this.Refresh();
+			console.log(this.child?.points[0].X + "," + this.child?.points[0].Y + " " + this.translateClickPoint.X + "," + this.translateClickPoint.Y);
+		}
+	}
+	private RotateTransform(e: MouseEvent): void {
+		if (this.rotating && this.child) {
+			var angleNew = Math.atan2(e.offsetY - this.child.offsetX, e.offsetX - this.child.offsetY)-Math.PI/2;
+			this.child?.Rotate(angleNew);
 			this.Refresh();
 		}
 	}
@@ -230,7 +249,7 @@ class TransformGrid {
 		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
 		this.scaleY = element.scaleY;
-		this.translatePoint = element.GetAbsolutePosition();
+		this.translatePoint = new Point(this.child.offsetX, this.child.offsetY);
 		this.Refresh();
 	}
 	public Refresh(): void {
@@ -239,15 +258,18 @@ class TransformGrid {
 		let translate = document.getElementById(this.Translate);
 		let scale = document.getElementById(this.MultiScale);
 		let stroke = document.getElementById(this.Stroke);
+		let rotate = document.getElementById(this.Rotate);
 		if (this.child) {
 			scaleX?.setAttribute("x", (this.child.points[1].X - this.adornerA / 2).toString());
 			scale?.setAttribute("x", (this.child.points[2].X - this.adornerA / 2).toString());
 			scaleY?.setAttribute("x", (this.child.points[3].X - this.adornerA / 2).toString());
 			translate?.setAttribute("x", (this.child.points[0].X - this.adornerA / 2).toString());
+			rotate?.setAttribute("x", (this.translatePoint.X + (this.width + 15) * Math.cos(this.child.rotateAngle - Math.PI / 2)).toString());
 			scaleX?.setAttribute("y", (this.child.points[1].Y - this.adornerA / 2).toString());
 			translate?.setAttribute("y", (this.child.points[0].Y - this.adornerA / 2).toString());
 			scaleY?.setAttribute("y", (this.child.points[3].Y - this.adornerA / 2).toString());
 			scale?.setAttribute("y", (this.child.points[2].Y - this.adornerA / 2).toString());
+			rotate?.setAttribute("y", (this.translatePoint.Y + (this.height + 15) * Math.sin(this.child.rotateAngle-Math.PI/2)).toString());
 		}
 
 		stroke?.setAttribute("points", `${this.child?.points[0].X},${this.child?.points[0].Y} 
@@ -337,14 +359,14 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		}
 		this.cx = 0;
 		this.cy = 0;
-		this.offsetX = DefaultA / 2;
-		this.offsetY = DefaultA / 2;
+		this.offsetX = DefaultA;
+		this.offsetY = DefaultA;
 		this.width = DefaultA;
 		this.height = DefaultA;
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 1;
-		this.rotateAngle = Math.PI / 18;
+		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
 		this.Refresh();		
 	}
@@ -377,8 +399,10 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 	//angle in degrees
 	public Rotate(angle: number): void {
-		const angleInRad = Math.PI * angle / 180.0;
+		const angleInRad = angle;
 		this.rotateAngle = angleInRad;
+		this.SetPointsToDefault();
+		this.TransformPoints();
 		this.Refresh();
 	}
 	public Translate(x: number, y: number): void {
