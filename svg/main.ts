@@ -312,11 +312,11 @@ class Ellipse implements ScaleAble {
 		{
 			element.setAttribute("cx", (this.cx + this.strokeWidth / 2 + GlobalXOffset).toString());
 			element.setAttribute("cy", (this.cy + this.strokeWidth / 2 + GlobalYOffset).toString());
-			element.setAttribute("rx", (this.width / 2).toString());
-			element.setAttribute("ry", (this.height / 2).toString());
+			element.setAttribute("rx", (this.width/2).toString());
+			element.setAttribute("ry", (this.height/2).toString());
 			element.setAttribute("fill", this.fill);
 			element.setAttribute("stroke", this.stroke);
-			element.setAttribute("strokeWidth", this.strokeWidth.toString());
+			element.setAttribute("stroke-width", this.strokeWidth.toString());
 			element.setAttribute("transform", `matrix(
 ${GlobalScale * Math.cos(this.rotateAngle)},
 ${GlobalScale * Math.sin(this.rotateAngle)},
