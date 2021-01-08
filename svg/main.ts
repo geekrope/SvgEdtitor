@@ -310,8 +310,8 @@ class Ellipse implements ScaleAble {
 		const element = document.getElementById(this.id);
 		assert(element);
 		{
-			element.setAttribute("cx", (this.cx + this.strokeWidth / 2 + GlobalXOffset).toString());
-			element.setAttribute("cy", (this.cy + this.strokeWidth / 2 + GlobalYOffset).toString());
+			element.setAttribute("cx", (this.cx).toString());
+			element.setAttribute("cy", (this.cy).toString());
 			element.setAttribute("rx", (this.width/2).toString());
 			element.setAttribute("ry", (this.height/2).toString());
 			element.setAttribute("fill", this.fill);
@@ -357,16 +357,10 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.parent = parent;
 		this.id = "el" + ElementIndex;
 		const element = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-		element.id = this.id;
-		const cen = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-		cen.setAttribute("fill", "black");
-		cen.setAttribute("rx", "5");
-		cen.setAttribute("ry", "5");
-		cen.id = "center";
+		element.id = this.id;		
 		const parentElement = document.getElementById(parent);
 		if (parentElement) {
-			parentElement.appendChild(element);
-			parentElement.appendChild(cen);
+			parentElement.appendChild(element);			
 		}
 		this.cx = 0;
 		this.cy = 0;
@@ -376,7 +370,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.height = DefaultA;
 		this.fill = "none";
 		this.stroke = "black";
-		this.strokeWidth = 1;
+		this.strokeWidth = 2;
 		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
 		this.Refresh();		
@@ -426,10 +420,145 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 	public GetOriginalHeight(): number {
 		return DefaultA;
+	}	
+}
+class Rectangle implements ScaleAble {
+	public id: string;
+	public cx: number;
+	public cy: number;
+	public width: number;
+	public height: number;
+	public fill: string;
+	public stroke: string;
+	public strokeWidth: number;
+	public scaleX = 1;
+	public scaleY = 1;
+	public offsetX = 0;
+	public offsetY = 0;
+	rotateAngle: number;
+	parent: string;
+	public points: Point[] = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
+	public center: Point;
+	public Refresh(): void {
+		const element = document.getElementById(this.id);
+		assert(element);
+		{
+			element.setAttribute("x", (this.cx).toString());
+			element.setAttribute("y", (this.cy).toString());
+			element.setAttribute("width", (this.width).toString());
+			element.setAttribute("height", (this.height).toString());
+			element.setAttribute("fill", this.fill);
+			element.setAttribute("stroke", this.stroke);
+			element.setAttribute("stroke-width", this.strokeWidth.toString());
+			element.style.transform = `matrix(
+${GlobalScale * Math.cos(this.rotateAngle)},
+${GlobalScale * Math.sin(this.rotateAngle)},
+${GlobalScale * -Math.sin(this.rotateAngle)},
+${GlobalScale * Math.cos(this.rotateAngle)},
+${this.center.X - (this.center.X * Math.cos(this.rotateAngle) - this.center.Y * Math.sin(this.rotateAngle)) + this.offsetX},
+${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * Math.sin(this.rotateAngle)) + this.offsetY})`;
+		}
+		this.SetPointsToDefault();
+		this.TransformPoints();
 	}
-	public GetAbsolutePosition(): Point {
-		var x = this.cx - this.width / 2;
-		var y = this.cy - this.height / 2;
-		return new Point(x, y);
+
+	private SetPointsToDefault(): void {
+		let pos = new Point(0, 0);
+		this.points[0] = pos;
+		this.points[1] = new Point(pos.X + DefaultA, pos.Y);
+		this.points[2] = new Point(pos.X + DefaultA, pos.Y + DefaultA);
+		this.points[3] = new Point(pos.X, pos.Y + DefaultA);
+	}
+
+	private TransformPoints() {
+		let a = Math.cos(this.rotateAngle) * GlobalScale * this.scaleX;
+		let b = Math.sin(this.rotateAngle) * GlobalScale * this.scaleX;
+		let c = -Math.sin(this.rotateAngle) * GlobalScale * this.scaleY;
+		let d = Math.cos(this.rotateAngle) * GlobalScale * this.scaleY;
+		let e = this.center.X - (this.center.X * Math.cos(this.rotateAngle) - this.center.Y * Math.sin(this.rotateAngle)) + this.offsetX;
+		let f = this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * Math.sin(this.rotateAngle)) + this.offsetY;
+		for (let index = 0; index < this.points.length; index++) {
+			this.points[index] = new Point(this.points[index].X * a + this.points[index].Y * c + e, this.points[index].X * b + this.points[index].Y * d + f);
+		}
+	}
+
+	private SetCenter(): void {
+		this.center = new Point(0, 0);
+		this.cx = -this.width / 2;
+		this.cy = -this.height / 2;
+		this.Refresh();
+	}
+
+	constructor(parent: string) {
+		this.parent = parent;
+		this.id = "el" + ElementIndex;
+		const element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+		element.id = this.id;		
+		const parentElement = document.getElementById(parent);
+		if (parentElement) {
+			parentElement.appendChild(element);			
+		}
+		this.cx = 0;
+		this.cy = 0;
+		this.offsetX = DefaultA;
+		this.offsetY = DefaultA;
+		this.width = DefaultA;
+		this.height = DefaultA;
+		this.fill = "none";
+		this.stroke = "black";
+		this.strokeWidth = 1;
+		this.rotateAngle = 0;
+		this.center = new Point(0, 0);
+		this.SetCenter();
+		this.Refresh();
+	}
+	public Delete(): void {
+		const parentElement = document.getElementById(this.parent);
+		const element = document.getElementById(this.id);
+		if (element && parentElement) {
+			parentElement.removeChild(element);
+		}
+	}
+	public ScaleX(value: number): void {
+		let translPoint = this.points[0];
+		this.width = DefaultA * value;
+		this.scaleX = value * GlobalScale;
+		this.SetPointsToDefault();
+		this.TransformPoints();
+		//this.offsetY += translPoint.Y - this.points[0].Y;
+		//this.offsetX += translPoint.X - this.points[0].X;
+		this.SetCenter();
+		this.Refresh();		
+	}
+	public ScaleY(value: number): void {
+		let translPoint = this.points[0];
+		this.height = DefaultA * value;
+		this.scaleY = value * GlobalScale;
+		this.SetPointsToDefault();
+		this.TransformPoints();
+		//this.offsetY += translPoint.Y - this.points[0].Y;
+		//this.offsetX += translPoint.X - this.points[0].X;
+		this.SetCenter();
+		this.Refresh();
+	}
+	//angle in degrees
+	public Rotate(angle: number): void {
+		const angleInRad = angle;
+		this.rotateAngle = angleInRad;
+		this.SetPointsToDefault();
+		this.TransformPoints();
+		this.Refresh();
+	}
+	public Translate(x: number, y: number): void {
+		this.offsetX += x;
+		this.offsetY += y;
+		this.SetCenter();
+		this.Refresh();
+	}
+	public GetOriginalWidth(): number {
+		return DefaultA;
+	}
+	public GetOriginalHeight(): number {
+		return DefaultA;
 	}
 }
