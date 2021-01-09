@@ -27,11 +27,12 @@ function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
 	var x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
-interface Colored {
+interface UIElement {
 	fill: string;
 	stroke: string;
 	strokeWidth: number;
 	Refresh(): void;
+	Delete(): void;
 }
 interface ScaleAble {
 	ScaleX(value: number): void;
@@ -306,7 +307,7 @@ ${this.child?.points[2].X},${this.child?.points[2].Y}
 ${this.child?.points[3].X},${this.child?.points[3].Y}`);
 	}
 }
-class Ellipse implements ScaleAble, Colored {
+class Ellipse implements ScaleAble, UIElement {
 	public id: string;
 	public cx: number;
 	public cy: number;
@@ -438,7 +439,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		return DefaultA;
 	}
 }
-class Rectangle implements ScaleAble, Colored {
+class Rectangle implements ScaleAble, UIElement {
 	public id: string;
 	public cx: number;
 	public cy: number;
@@ -583,7 +584,7 @@ interface Bezier {
 enum BezierType {
 	quadratic,cubic
 }
-class BezierSegment implements Colored, Bezier {
+class BezierSegment implements UIElement, Bezier {
 	public fill: string;
 	public stroke: string;
 	public strokeWidth: number;
@@ -706,14 +707,7 @@ class BezierSegment implements Colored, Bezier {
 		group.appendChild(polyline);
 		this.CreateAdoners();
 		this.Refresh();
-	}
-	public Delete(): void {
-		const parentElement = document.getElementById(this.parent);
-		const element = document.getElementById(this.id);
-		if (element && parentElement) {
-			parentElement.removeChild(element);
-		}
-	}
+	}	
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
 		if (this.Type as BezierType == BezierType.quadratic) {
@@ -734,5 +728,15 @@ class BezierSegment implements Colored, Bezier {
 		}
 		const stroke = document.getElementById(this.StrokePolyline);
 		stroke?.setAttribute("points", this.ArrayToString(this.Points));
+	}
+
+	public Delete(): void {
+		const parentElement = document.getElementById(this.parent);
+		const element = document.getElementById(this.id);
+		const group = document.getElementById(this.AdonerGroupId);
+		if (element && parentElement && group) {
+			parentElement.removeChild(element);
+			parentElement.removeChild(group);
+		}
 	}
 }
