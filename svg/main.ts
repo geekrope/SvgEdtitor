@@ -27,6 +27,12 @@ function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
 	var x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
+interface Colored {
+	fill: string;
+	stroke: string;
+	strokeWidth: number;
+	Refresh(): void;
+}
 interface ScaleAble {
 	ScaleX(value: number): void;
 	ScaleY(value: number): void;
@@ -38,7 +44,7 @@ interface ScaleAble {
 	rotateAngle: number;
 	points: Point[];
 	scaleY: number;
-	GetOriginalHeight(): number;	
+	GetOriginalHeight(): number;
 	offsetX: number;
 	offsetY: number;
 }
@@ -59,7 +65,7 @@ class TransformGrid {
 	readonly Stroke: string = "Stroke";
 	readonly Rotate: string = "Rotate";
 	readonly MultiScale: string = "MultiScale";
-	parent: string;	
+	parent: string;
 	scaleX = 1;
 	scaleY = 1;
 	width = 0;
@@ -68,12 +74,12 @@ class TransformGrid {
 	moving: boolean = false;
 	scalingX: boolean = false;
 	scalingY: boolean = false;
-	rotating: boolean = false;	
+	rotating: boolean = false;
 	multiScaling: boolean = false;
 	_translateClickPoint = new Point(0, 0);
 	scaleXClickPoint = new Point(0, 0);
 	scaleYClickPoint = new Point(0, 0);
-	scaleAllClickPoint = new Point(0, 0);	
+	scaleAllClickPoint = new Point(0, 0);
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	child?: ScaleAble;
@@ -119,7 +125,7 @@ class TransformGrid {
 			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
 		}).bind(this));
 		rotate.addEventListener("mousedown", ((e: MouseEvent) => {
-			this.rotating = true;			
+			this.rotating = true;
 		}).bind(this));
 		parentElement?.addEventListener("mousemove", this.Transform.bind(this));
 		parentElement?.addEventListener("mouseup", this.Reset.bind(this));
@@ -156,7 +162,7 @@ class TransformGrid {
 	private TranslateTransform(e: MouseEvent): void {
 		if (this.moving) {
 			var deltaX = e.offsetX - this.translateClickPoint.X;
-			var deltaY = e.offsetY - this.translateClickPoint.Y;			
+			var deltaY = e.offsetY - this.translateClickPoint.Y;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
 			this.Refresh();
@@ -165,7 +171,7 @@ class TransformGrid {
 	}
 	private RotateTransform(e: MouseEvent): void {
 		if (this.rotating && this.child) {
-			var angleNew = Math.atan2(e.offsetY - this.child.offsetY, e.offsetX - this.child.offsetX)+Math.PI/2;
+			var angleNew = Math.atan2(e.offsetY - this.child.offsetY, e.offsetX - this.child.offsetX) + Math.PI / 2;
 			this.child?.Rotate(angleNew);
 			this.Refresh();
 		}
@@ -188,7 +194,7 @@ class TransformGrid {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
 			}
 			this.scaleXClickPoint = new Point(e.offsetX, e.offsetY);
-			this.child?.ScaleX(this.scaleX);			
+			this.child?.ScaleX(this.scaleX);
 			this.Refresh();
 		}
 	}
@@ -245,7 +251,7 @@ class TransformGrid {
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
-		this.scaleY = element.scaleY;		
+		this.scaleY = element.scaleY;
 		this.Refresh();
 	}
 	public Refresh(): void {
@@ -255,8 +261,8 @@ class TransformGrid {
 		let scale = document.getElementById(this.MultiScale);
 		let stroke = document.getElementById(this.Stroke);
 		let rotate = document.getElementById(this.Rotate);
-		if (this.child) {		
-			let pos = new Point(-DefaultA / 2, -DefaultA / 2);			
+		if (this.child) {
+			let pos = new Point(-DefaultA / 2, -DefaultA / 2);
 			var matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle) * this.scaleX,
 				Math.sin(this.child.rotateAngle) * this.scaleX,
@@ -288,7 +294,7 @@ ${this.child?.points[2].X},${this.child?.points[2].Y}
 ${this.child?.points[3].X},${this.child?.points[3].Y}`);
 	}
 }
-class Ellipse implements ScaleAble {
+class Ellipse implements ScaleAble, Colored {
 	public id: string;
 	public cx: number;
 	public cy: number;
@@ -311,8 +317,8 @@ class Ellipse implements ScaleAble {
 		{
 			element.setAttribute("cx", (this.cx).toString());
 			element.setAttribute("cy", (this.cy).toString());
-			element.setAttribute("rx", (this.width/2).toString());
-			element.setAttribute("ry", (this.height/2).toString());
+			element.setAttribute("rx", (this.width / 2).toString());
+			element.setAttribute("ry", (this.height / 2).toString());
 			element.setAttribute("fill", this.fill);
 			element.setAttribute("stroke", this.stroke);
 			element.setAttribute("stroke-width", this.strokeWidth.toString());
@@ -333,7 +339,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 
 	private SetPointsToDefault(): void {
-		let pos = new Point(-DefaultA/2, -DefaultA/2);
+		let pos = new Point(-DefaultA / 2, -DefaultA / 2);
 		this.points[0] = pos;
 		this.points[1] = new Point(pos.X + DefaultA, pos.Y);
 		this.points[2] = new Point(pos.X + DefaultA, pos.Y + DefaultA);
@@ -356,10 +362,10 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.parent = parent;
 		this.id = "el" + ElementIndex;
 		const element = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-		element.id = this.id;		
+		element.id = this.id;
 		const parentElement = document.getElementById(parent);
 		if (parentElement) {
-			parentElement.appendChild(element);			
+			parentElement.appendChild(element);
 		}
 		this.cx = 0;
 		this.cy = 0;
@@ -372,7 +378,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.strokeWidth = 4;
 		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
-		this.Refresh();		
+		this.Refresh();
 	}
 	public Delete(): void {
 		const parentElement = document.getElementById(this.parent);
@@ -382,9 +388,9 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		}
 	}
 	public ScaleX(value: number): void {
-		let translPoint = this.points[0];		
+		let translPoint = this.points[0];
 		this.width = DefaultA * value;
-		this.scaleX = value * GlobalScale;	
+		this.scaleX = value * GlobalScale;
 		this.SetPointsToDefault();
 		this.TransformPoints();
 		this.offsetY += translPoint.Y - this.points[0].Y;
@@ -392,7 +398,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.Refresh();
 	}
 	public ScaleY(value: number): void {
-		let translPoint = this.points[0];	
+		let translPoint = this.points[0];
 		this.height = DefaultA * value;
 		this.scaleY = value * GlobalScale;
 		this.SetPointsToDefault();
@@ -400,7 +406,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetY += translPoint.Y - this.points[0].Y;
 		this.offsetX += translPoint.X - this.points[0].X;
 		this.Refresh();
-	}	
+	}
 	public Rotate(angle: number): void {
 		const angleInRad = angle;
 		this.rotateAngle = angleInRad;
@@ -418,9 +424,9 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 	public GetOriginalHeight(): number {
 		return DefaultA;
-	}	
+	}
 }
-class Rectangle implements ScaleAble {
+class Rectangle implements ScaleAble, Colored {
 	public id: string;
 	public cx: number;
 	public cy: number;
@@ -491,10 +497,10 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.parent = parent;
 		this.id = "el" + ElementIndex;
 		const element = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-		element.id = this.id;		
+		element.id = this.id;
 		const parentElement = document.getElementById(parent);
 		if (parentElement) {
-			parentElement.appendChild(element);			
+			parentElement.appendChild(element);
 		}
 		this.cx = 0;
 		this.cy = 0;
@@ -526,7 +532,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetY += translPoint.Y - this.points[0].Y;
 		this.offsetX += translPoint.X - this.points[0].X;
 		this.SetCenter();
-		this.Refresh();		
+		this.Refresh();
 	}
 	public ScaleY(value: number): void {
 		let translPoint = this.points[0];
@@ -538,7 +544,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetX += translPoint.X - this.points[0].X;
 		this.SetCenter();
 		this.Refresh();
-	}	
+	}
 	public Rotate(angle: number): void {
 		const angleInRad = angle;
 		this.rotateAngle = angleInRad;
@@ -557,5 +563,52 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 	public GetOriginalHeight(): number {
 		return DefaultA;
+	}
+}
+interface Bezier {
+	Points: Point[];
+}
+class QuadraticBezier implements Colored {
+	public fill: string;
+	public stroke: string;
+	public strokeWidth: number;
+	public _Points: Point[];
+	public id: string;
+	parent: string;
+	get Points() {
+		return this._Points;
+	}
+	set Points(points: Point[]) {
+		if (points.length == 3) {
+			this._Points = points;
+		}		
+	}
+	constructor(parent :string) {
+		this.parent = parent;
+		var parentElement = document.getElementById(parent);
+		this.fill = "none";
+		this.stroke = "black";
+		this.strokeWidth = 4;
+		this.id = "el" + ElementIndex;
+		this.Points = [new Point(this.strokeWidth / 2, DefaultA + this.strokeWidth / 2), new Point(this.strokeWidth / 2, this.strokeWidth / 2), new Point(DefaultA + this.strokeWidth / 2, this.strokeWidth / 2)];
+		this._Points = this.Points;
+		var element = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		element.id = this.id;
+		parentElement?.appendChild(element);
+		this.Refresh();
+	}
+	public Delete(): void {
+		const parentElement = document.getElementById(this.parent);
+		const element = document.getElementById(this.id);
+		if (element && parentElement) {
+			parentElement.removeChild(element);
+		}
+	}
+	public Refresh(): void {		
+		const element = document.getElementById(this.id);
+		element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} Q${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y}`);
+		element?.setAttribute("stroke", this.stroke);
+		element?.setAttribute("stroke-width", this.strokeWidth.toString());
+		element?.setAttribute("fill", this.fill);
 	}
 }
