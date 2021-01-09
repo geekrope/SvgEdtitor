@@ -580,7 +580,10 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 interface Bezier {
 	Points: Point[];
 }
-class QuadraticBezier implements Colored, Bezier {
+enum BezierType {
+	quadratic,cubic
+}
+class BezierSegment implements Colored, Bezier {
 	public fill: string;
 	public stroke: string;
 	public strokeWidth: number;
@@ -589,6 +592,8 @@ class QuadraticBezier implements Colored, Bezier {
 	AdonerGroupId: string;
 	AdonerPoints: Point[] = [];
 	AdonerMove: boolean[] = [];
+	Type: BezierType;
+	StrokePolyline: string;
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	parent: string;
@@ -597,7 +602,10 @@ class QuadraticBezier implements Colored, Bezier {
 		return this._Points;
 	}
 	set Points(points: Point[]) {
-		if (points.length == 3) {
+		if (points.length == 3 && this.Type as BezierType == BezierType.quadratic) {
+			this._Points = points;
+		}
+		if (points.length == 4 && this.Type as BezierType == BezierType.cubic) {
 			this._Points = points;
 		}
 	}
@@ -632,7 +640,7 @@ class QuadraticBezier implements Colored, Bezier {
 
 					}
 				}).bind(this));
-				parentElement.addEventListener("mousemove", ((e: MouseEvent) => {					
+				parentElement.addEventListener("mousemove", ((e: MouseEvent) => {
 					var index = 0;
 					for (let i = 0; i < this.AdonerMove.length; i++) {
 						if (this.AdonerMove[i]) {
@@ -658,15 +666,29 @@ class QuadraticBezier implements Colored, Bezier {
 		}
 	}
 
-	constructor(parent: string) {
+	private ArrayToString(points: Point[]): string {
+		var str = "";
+		for (let index = 0; index < points.length; index++) {
+			str += `${points[index].X},${points[index].Y} `;
+		}
+		return str;
+	}
+
+	constructor(parent: string, type: BezierType) {
 		this.parent = parent;
+		this.Type = type;
 		var parentElement = document.getElementById(parent);
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 4;
 		this.id = "el" + ElementIndex;
 		this.AdonerGroupId = this.id + "_AdornerGroup";
-		this.Points = [new Point(this.strokeWidth / 2 + DefaultA, DefaultA + this.strokeWidth / 2 + DefaultA), new Point(this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA), new Point(DefaultA + this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA)];
+		if (type as BezierType == BezierType.quadratic) {
+			this.Points = [new Point(this.strokeWidth / 2 + DefaultA, DefaultA * 2 + this.strokeWidth / 2), new Point(this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA), new Point(DefaultA * 2 + this.strokeWidth / 2, this.strokeWidth / 2 + DefaultA)];
+		}
+		if (type as BezierType == BezierType.cubic) {
+			this.Points = [new Point(this.strokeWidth / 2 + DefaultA, DefaultA * 2 + this.strokeWidth / 2), new Point(this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA), new Point(DefaultA * 2 + this.strokeWidth / 2, this.strokeWidth / 2 + DefaultA), new Point(DefaultA * 2 + this.strokeWidth / 2, this.strokeWidth / 2)];
+		}
 		this._Points = this.Points;
 		var element = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		element.id = this.id;
@@ -675,6 +697,13 @@ class QuadraticBezier implements Colored, Bezier {
 		group.id = this.AdonerGroupId;
 		parentElement?.appendChild(group);
 		this.Adorners = [];
+		this.StrokePolyline = this.id + "_Polyline";
+		var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+		polyline.setAttribute("stroke", "#808080");
+		polyline.setAttribute("stroke-width", "2");
+		polyline.setAttribute("fill", "none");
+		polyline.id = this.StrokePolyline;
+		group.appendChild(polyline);
 		this.CreateAdoners();
 		this.Refresh();
 	}
@@ -687,7 +716,12 @@ class QuadraticBezier implements Colored, Bezier {
 	}
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
-		element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} Q${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y}`);
+		if (this.Type as BezierType == BezierType.quadratic) {
+			element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} Q${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y}`);
+		}
+		if (this.Type as BezierType == BezierType.cubic) {
+			element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} C${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y} ${this.Points[3].X},${this.Points[3].Y}`);
+		}		
 		element?.setAttribute("stroke", this.stroke);
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
@@ -698,5 +732,7 @@ class QuadraticBezier implements Colored, Bezier {
 				adorner.setAttribute("y", (this.Points[index].Y - this.adornerA / 2).toString());
 			}
 		}
+		const stroke = document.getElementById(this.StrokePolyline);
+		stroke?.setAttribute("points", this.ArrayToString(this.Points));
 	}
 }
