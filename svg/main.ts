@@ -57,7 +57,6 @@ class Point {
 	}
 }
 class TransformGrid {
-	readonly RotateGroup: string = "RotateGroup";
 	readonly ScaleGroup: string = "ScaleGroup";
 	readonly Translate: string = "Translate";
 	readonly ScaleX: string = "ScaleX";
@@ -247,6 +246,19 @@ class TransformGrid {
 		}
 	}
 	public SetChild(element: ScaleAble): void {
+		if (!element) {
+			var group = document.getElementById(this.ScaleGroup);
+			if (group) {
+				group.style.display = "none";
+			}
+			return;
+		}
+		else {
+			var group = document.getElementById(this.ScaleGroup);
+			if (group) {
+				group.style.display = "inline";
+			}
+		}
 		this.child = element;
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
@@ -568,33 +580,102 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 interface Bezier {
 	Points: Point[];
 }
-class QuadraticBezier implements Colored {
+class QuadraticBezier implements Colored, Bezier {
 	public fill: string;
 	public stroke: string;
 	public strokeWidth: number;
 	public _Points: Point[];
 	public id: string;
+	AdonerGroupId: string;
+	AdonerPoints: Point[] = [];
+	AdonerMove: boolean[] = [];
+	adornerA = 10;
+	adornerColor = "#53b6ee";
 	parent: string;
+	Adorners: string[];
 	get Points() {
 		return this._Points;
 	}
 	set Points(points: Point[]) {
 		if (points.length == 3) {
 			this._Points = points;
-		}		
+		}
 	}
-	constructor(parent :string) {
+
+	private CreateAdorner(id: string): SVGRectElement {
+		const adorner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+		adorner.setAttribute("width", this.adornerA.toString());
+		adorner.setAttribute("height", this.adornerA.toString());
+		adorner.setAttribute("fill", "#ffffff");
+		adorner.setAttribute("stroke", this.adornerColor);
+		adorner.setAttribute("stroke-width", "2");
+		adorner.id = id;
+		return adorner;
+	}
+
+	private CreateAdoners() {
+		var group = document.getElementById(this.AdonerGroupId);
+		var parentElement = document.getElementById(this.parent);
+		if (group && parentElement) {
+			for (let index = 0; index < this.Points.length; index++) {
+				let adonerId = this.id + "_BezierAdorner_" + index;
+				var adorner = this.CreateAdorner(adonerId);
+				group.appendChild(adorner);
+				this.Adorners[index] = adonerId;
+				adorner.addEventListener("mousedown", ((e: MouseEvent) => {
+					if (e.target) {
+						var target = (<SVGRectElement>e.target).id;
+						var split = target.toString().split("_");
+						var index = Number.parseInt(split[split.length - 1]);
+						this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
+						this.AdonerMove[index] = true;
+
+					}
+				}).bind(this));
+				parentElement.addEventListener("mousemove", ((e: MouseEvent) => {					
+					var index = 0;
+					for (let i = 0; i < this.AdonerMove.length; i++) {
+						if (this.AdonerMove[i]) {
+							index = i;
+							break;
+						}
+					}
+					if (this.AdonerMove[index]) {
+						this.Points[index].X += e.offsetX - this.AdonerPoints[index].X;
+						this.Points[index].Y += e.offsetY - this.AdonerPoints[index].Y;
+						this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
+					}
+					this.Refresh();
+
+				}).bind(this));
+			}
+
+			parentElement.addEventListener("mouseup", ((e: MouseEvent) => {
+				for (let index = 0; index < this.AdonerMove.length; index++) {
+					this.AdonerMove[index] = false;
+				}
+			}).bind(this));
+		}
+	}
+
+	constructor(parent: string) {
 		this.parent = parent;
 		var parentElement = document.getElementById(parent);
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 4;
 		this.id = "el" + ElementIndex;
-		this.Points = [new Point(this.strokeWidth / 2, DefaultA + this.strokeWidth / 2), new Point(this.strokeWidth / 2, this.strokeWidth / 2), new Point(DefaultA + this.strokeWidth / 2, this.strokeWidth / 2)];
+		this.AdonerGroupId = this.id + "_AdornerGroup";
+		this.Points = [new Point(this.strokeWidth / 2 + DefaultA, DefaultA + this.strokeWidth / 2 + DefaultA), new Point(this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA), new Point(DefaultA + this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA)];
 		this._Points = this.Points;
 		var element = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		element.id = this.id;
 		parentElement?.appendChild(element);
+		var group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		group.id = this.AdonerGroupId;
+		parentElement?.appendChild(group);
+		this.Adorners = [];
+		this.CreateAdoners();
 		this.Refresh();
 	}
 	public Delete(): void {
@@ -604,11 +685,18 @@ class QuadraticBezier implements Colored {
 			parentElement.removeChild(element);
 		}
 	}
-	public Refresh(): void {		
+	public Refresh(): void {
 		const element = document.getElementById(this.id);
 		element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} Q${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y}`);
 		element?.setAttribute("stroke", this.stroke);
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
+		for (let index = 0; index < this.Points.length; index++) {
+			var adorner = document.getElementById(this.Adorners[index]);
+			if (adorner) {
+				adorner.setAttribute("x", (this.Points[index].X - this.adornerA / 2).toString());
+				adorner.setAttribute("y", (this.Points[index].Y - this.adornerA / 2).toString());
+			}
+		}
 	}
 }
