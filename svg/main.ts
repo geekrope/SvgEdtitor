@@ -15,16 +15,16 @@ function assert(condition: any, msg?: string): asserts condition {
 	}
 }
 function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
-	var a = mtrx.a;
-	var b = mtrx.b;
-	var c = mtrx.c;
-	var d = mtrx.d;
-	var e = mtrx.e;
-	var f = mtrx.f;
-	var x1 = transformed.X;
-	var y1 = transformed.Y;
-	var y = (((b) / a) * x1 - y1 + f - ((b * e) / a)) / ((b * c - d * a) / a);
-	var x = (1 / a) * (x1 - c * y - e);
+	let a = mtrx.a;
+	let b = mtrx.b;
+	let c = mtrx.c;
+	let d = mtrx.d;
+	let e = mtrx.e;
+	let f = mtrx.f;
+	let x1 = transformed.X;
+	let y1 = transformed.Y;
+	let y = (((b) / a) * x1 - y1 + f - ((b * e) / a)) / ((b * c - d * a) / a);
+	let x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
 interface UIElement {
@@ -33,6 +33,10 @@ interface UIElement {
 	strokeWidth: number;
 	Refresh(): void;
 	Delete(): void;
+}
+interface DynamicEditable {
+	AddPoint(point: Point): void;
+	ClosePath(): void;
 }
 interface ScaleAble {
 	ScaleX(value: number): void;
@@ -134,7 +138,7 @@ class TransformGrid {
 		stroke.setAttribute("stroke", this.adornerColor);
 		stroke.setAttribute("fill", "none");
 		stroke.setAttribute("stroke-width", this.strokeWidth.toString());
-		var group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 		group.id = this.ScaleGroup;
 		group.appendChild(stroke);
 		group.appendChild(translate);
@@ -161,8 +165,8 @@ class TransformGrid {
 	}
 	private TranslateTransform(e: MouseEvent): void {
 		if (this.moving) {
-			var deltaX = e.offsetX - this.translateClickPoint.X;
-			var deltaY = e.offsetY - this.translateClickPoint.Y;
+			let deltaX = e.offsetX - this.translateClickPoint.X;
+			let deltaY = e.offsetY - this.translateClickPoint.Y;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
 			this.Refresh();
@@ -171,14 +175,14 @@ class TransformGrid {
 	}
 	private RotateTransform(e: MouseEvent): void {
 		if (this.rotating && this.child) {
-			var angleNew = Math.atan2(e.offsetY - this.child.offsetY, e.offsetX - this.child.offsetX) + Math.PI / 2;
+			let angleNew = Math.atan2(e.offsetY - this.child.offsetY, e.offsetX - this.child.offsetX) + Math.PI / 2;
 			this.child?.Rotate(angleNew);
 			this.Refresh();
 		}
 	}
 	private ScaleXAxes(e: MouseEvent): void {
 		if (this.scalingX && this.child) {
-			var matrix = new DOMMatrix([
+			let matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle),
 				Math.sin(this.child.rotateAngle),
 				-Math.sin(this.child.rotateAngle),
@@ -186,9 +190,9 @@ class TransformGrid {
 				0,
 				0
 			]);
-			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
-			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleXClickPoint);
-			var deltaX = point.X - scaleXClickPointNew.X;
+			let point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			let scaleXClickPointNew = getOriginalPoint(matrix, this.scaleXClickPoint);
+			let deltaX = point.X - scaleXClickPointNew.X;
 			this.width += deltaX;
 			if (this.child) {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
@@ -200,7 +204,7 @@ class TransformGrid {
 	}
 	private ScaleYAxes(e: MouseEvent): void {
 		if (this.scalingY && this.child) {
-			var matrix = new DOMMatrix([
+			let matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle),
 				Math.sin(this.child.rotateAngle),
 				-Math.sin(this.child.rotateAngle),
@@ -208,9 +212,9 @@ class TransformGrid {
 				0,
 				0
 			]);
-			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
-			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleYClickPoint);
-			var deltaY = point.Y - scaleXClickPointNew.Y;
+			let point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			let scaleXClickPointNew = getOriginalPoint(matrix, this.scaleYClickPoint);
+			let deltaY = point.Y - scaleXClickPointNew.Y;
 			this.height += deltaY;
 			if (this.child) {
 				this.scaleY = this.height / this.child.GetOriginalHeight();
@@ -222,7 +226,7 @@ class TransformGrid {
 	}
 	private ScaleAllAxes(e: MouseEvent): void {
 		if (this.multiScaling && this.child) {
-			var matrix = new DOMMatrix([
+			let matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle),
 				Math.sin(this.child.rotateAngle),
 				-Math.sin(this.child.rotateAngle),
@@ -230,11 +234,11 @@ class TransformGrid {
 				0,
 				0
 			]);
-			var point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
-			var scaleXClickPointNew = getOriginalPoint(matrix, this.scaleAllClickPoint);
-			var deltaY = point.Y - scaleXClickPointNew.Y;
+			let point = getOriginalPoint(matrix, new Point(e.offsetX, e.offsetY));
+			let scaleXClickPointNew = getOriginalPoint(matrix, this.scaleAllClickPoint);
+			let deltaY = point.Y - scaleXClickPointNew.Y;
 			this.height += deltaY;
-			var deltaX = point.X - scaleXClickPointNew.X;
+			let deltaX = point.X - scaleXClickPointNew.X;
 			this.width += deltaX;
 			if (this.child) {
 				this.scaleY = this.height / this.child.GetOriginalHeight();
@@ -248,14 +252,14 @@ class TransformGrid {
 	}
 	public SetChild(element: ScaleAble): void {
 		if (!element) {
-			var group = document.getElementById(this.ScaleGroup);
+			let group = document.getElementById(this.ScaleGroup);
 			if (group) {
 				group.style.display = "none";
 			}
 			return;
 		}
 		else {
-			var group = document.getElementById(this.ScaleGroup);
+			let group = document.getElementById(this.ScaleGroup);
 			if (group) {
 				group.style.display = "inline";
 			}
@@ -276,7 +280,7 @@ class TransformGrid {
 		let rotate = document.getElementById(this.Rotate);
 		if (this.child) {
 			let pos = new Point(-DefaultA / 2, -DefaultA / 2);
-			var matrix = new DOMMatrix([
+			let matrix = new DOMMatrix([
 				Math.cos(this.child.rotateAngle) * this.scaleX,
 				Math.sin(this.child.rotateAngle) * this.scaleX,
 				-Math.sin(this.child.rotateAngle) * this.scaleY,
@@ -284,8 +288,8 @@ class TransformGrid {
 				this.child.center.X - (this.child.center.X * Math.cos(this.child.rotateAngle) - this.child.center.Y * Math.sin(this.child.rotateAngle)) + this.child.offsetX,
 				this.child.center.Y - (this.child.center.Y * Math.cos(this.child.rotateAngle) + this.child.center.X * Math.sin(this.child.rotateAngle)) + this.child.offsetY
 			]);
-			var point = new Point(pos.X * matrix.a + pos.Y * matrix.c + matrix.e, pos.X * matrix.b + pos.Y * matrix.d + matrix.f);
-			var pointRotated = new Point(point.X + Math.cos(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2, point.Y + Math.sin(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2);
+			let point = new Point(pos.X * matrix.a + pos.Y * matrix.c + matrix.e, pos.X * matrix.b + pos.Y * matrix.d + matrix.f);
+			let pointRotated = new Point(point.X + Math.cos(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2, point.Y + Math.sin(this.child.rotateAngle) * this.width / 2 - this.adornerA / 2);
 			scaleX?.setAttribute("x", (this.child.points[1].X - this.adornerA / 2).toString());
 			scale?.setAttribute("x", (this.child.points[2].X - this.adornerA / 2).toString());
 			scaleY?.setAttribute("x", (this.child.points[3].X - this.adornerA / 2).toString());
@@ -623,41 +627,42 @@ class BezierSegment implements UIElement, Bezier {
 	}
 
 	private CreateAdoners() {
-		var group = document.getElementById(this.AdonerGroupId);
-		var parentElement = document.getElementById(this.parent);
+		let group = document.getElementById(this.AdonerGroupId);
+		let parentElement = document.getElementById(this.parent);
 		if (group && parentElement) {
 			for (let index = 0; index < this.Points.length; index++) {
 				let adonerId = this.id + "_BezierAdorner_" + index;
-				var adorner = this.CreateAdorner(adonerId);
+				let adorner = this.CreateAdorner(adonerId);
 				group.appendChild(adorner);
 				this.Adorners[index] = adonerId;
 				adorner.addEventListener("mousedown", ((e: MouseEvent) => {
 					if (e.target) {
-						var target = (<SVGRectElement>e.target).id;
-						var split = target.toString().split("_");
-						var index = Number.parseInt(split[split.length - 1]);
+						let target = (<SVGRectElement>e.target).id;
+						let split = target.toString().split("_");
+						let index = Number.parseInt(split[split.length - 1]);
 						this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
 						this.AdonerMove[index] = true;
 
 					}
-				}).bind(this));
-				parentElement.addEventListener("mousemove", ((e: MouseEvent) => {
-					var index = 0;
-					for (let i = 0; i < this.AdonerMove.length; i++) {
-						if (this.AdonerMove[i]) {
-							index = i;
-							break;
-						}
-					}
-					if (this.AdonerMove[index]) {
-						this.Points[index].X += e.offsetX - this.AdonerPoints[index].X;
-						this.Points[index].Y += e.offsetY - this.AdonerPoints[index].Y;
-						this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
-					}
-					this.Refresh();
-
-				}).bind(this));
+				}).bind(this));				
 			}
+
+			parentElement.addEventListener("mousemove", ((e: MouseEvent) => {
+				let index = 0;
+				for (let i = 0; i < this.AdonerMove.length; i++) {
+					if (this.AdonerMove[i]) {
+						index = i;
+						break;
+					}
+				}
+				if (this.AdonerMove[index]) {
+					this.Points[index].X += e.offsetX - this.AdonerPoints[index].X;
+					this.Points[index].Y += e.offsetY - this.AdonerPoints[index].Y;
+					this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
+				}
+				this.Refresh();
+
+			}).bind(this));
 
 			parentElement.addEventListener("mouseup", ((e: MouseEvent) => {
 				for (let index = 0; index < this.AdonerMove.length; index++) {
@@ -668,7 +673,7 @@ class BezierSegment implements UIElement, Bezier {
 	}
 
 	private ArrayToString(points: Point[]): string {
-		var str = "";
+		let str = "";
 		for (let index = 0; index < points.length; index++) {
 			str += `${points[index].X},${points[index].Y} `;
 		}
@@ -678,7 +683,7 @@ class BezierSegment implements UIElement, Bezier {
 	constructor(parent: string, type: BezierType) {
 		this.parent = parent;
 		this.Type = type;
-		var parentElement = document.getElementById(parent);
+		let parentElement = document.getElementById(parent);
 		this.fill = "none";
 		this.stroke = "black";
 		this.strokeWidth = 4;
@@ -691,16 +696,16 @@ class BezierSegment implements UIElement, Bezier {
 			this.Points = [new Point(this.strokeWidth / 2 + DefaultA, DefaultA * 2 + this.strokeWidth / 2), new Point(this.strokeWidth / 2 + DefaultA, this.strokeWidth / 2 + DefaultA), new Point(DefaultA * 2 + this.strokeWidth / 2, this.strokeWidth / 2 + DefaultA), new Point(DefaultA * 2 + this.strokeWidth / 2, this.strokeWidth / 2)];
 		}
 		this._Points = this.Points;
-		var element = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		let element = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		element.id = this.id;
 		parentElement?.appendChild(element);
-		var group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 		group.id = this.AdonerGroupId;
 		parentElement?.appendChild(group);
 		this.Adorners = [];
 		this.StrokePolyline = this.id + "_Polyline";
-		var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-		polyline.setAttribute("stroke", "#808080");
+		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+		polyline.setAttribute("stroke", this.adornerColor /*"#808080"*/);
 		polyline.setAttribute("stroke-width", "2");
 		polyline.setAttribute("fill", "none");
 		polyline.id = this.StrokePolyline;
@@ -720,7 +725,7 @@ class BezierSegment implements UIElement, Bezier {
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
 		for (let index = 0; index < this.Points.length; index++) {
-			var adorner = document.getElementById(this.Adorners[index]);
+			let adorner = document.getElementById(this.Adorners[index]);
 			if (adorner) {
 				adorner.setAttribute("x", (this.Points[index].X - this.adornerA / 2).toString());
 				adorner.setAttribute("y", (this.Points[index].Y - this.adornerA / 2).toString());
@@ -728,6 +733,131 @@ class BezierSegment implements UIElement, Bezier {
 		}
 		const stroke = document.getElementById(this.StrokePolyline);
 		stroke?.setAttribute("points", this.ArrayToString(this.Points));
+	}
+
+	public Delete(): void {
+		const parentElement = document.getElementById(this.parent);
+		const element = document.getElementById(this.id);
+		const group = document.getElementById(this.AdonerGroupId);
+		const poly = document.getElementById(this.StrokePolyline);
+		if (element && parentElement && group && poly) {
+			parentElement.removeChild(element);
+			parentElement.removeChild(group);
+			parentElement.removeChild(poly);
+		}
+	}
+}
+class Polyline implements DynamicEditable, UIElement {
+	parent: string;
+	public fill: string="none";
+	public stroke: string="black";
+	public strokeWidth: number=4;
+	Points: Point[]=[];
+	public id: string;
+	AdonerGroupId: string;
+	AdonerPoints: Point[] = [];
+	AdonerMove: boolean[] = [];
+	Adorners: string[] = [];
+	adornerA = 10;
+	adornerColor = "#53b6ee";
+	closed = false;
+	private CreateAdorner(id: string): SVGRectElement {
+		const adorner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+		adorner.setAttribute("width", this.adornerA.toString());
+		adorner.setAttribute("height", this.adornerA.toString());
+		adorner.setAttribute("fill", "#ffffff");
+		adorner.setAttribute("stroke", this.adornerColor);
+		adorner.setAttribute("stroke-width", "2");
+		adorner.id = id;
+		return adorner;
+	}
+
+	constructor(parent: string) {
+		this.parent = parent;	
+		this.id = "el" + ElementIndex;
+		this.AdonerGroupId = this.id + "_AdornerGroup";
+		let parentElement = document.getElementById(parent);
+		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+		group.id = this.AdonerGroupId;
+		parentElement?.appendChild(group);
+		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+		polyline.id = this.id;
+	}
+
+	public AddPoint(point: Point): void {
+		if (!closed) {
+			this.Points.push(point);
+			let adornerId = this.id + "_Adorner_" + this.Points.length;
+			let adorner = this.CreateAdorner(adornerId);
+			adorner.setAttribute("x", (point.X - this.adornerA / 2).toString());
+			adorner.setAttribute("y", (point.Y - this.adornerA / 2).toString());
+			this.AdonerMove.push(false);
+			this.Adorners.push(adornerId);
+			this.AdonerPoints.push(new Point(0, 0));
+			var group = document.getElementById("this.AdonerGroupId");
+			group?.appendChild(adorner);
+			this.Refresh();
+		}		
+	}
+
+	private ArrayToString(points: Point[]): string {
+		let str = "";
+		for (let index = 0; index < points.length; index++) {
+			str += `${points[index].X},${points[index].Y} `;
+		}
+		return str;
+	}
+
+	public ClosePath(): void {		
+		let parentElement = document.getElementById(this.parent);
+		closed = true;
+		for (let index = 0; index < this.Adorners.length; index++) {
+			var element = document.getElementById(this.Adorners[index]);
+			if (element) {
+				element.addEventListener("mousedown", ((e: MouseEvent) => {
+					if (e.target) {
+						let target = (<SVGRectElement>e.target).id;
+						let split = target.toString().split("_");
+						let index = Number.parseInt(split[split.length - 1]);
+						this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
+						this.AdonerMove[index] = true;
+
+					}
+				}).bind(this));
+			}
+		}
+		if (parentElement) {
+			parentElement.addEventListener("mousemove", ((e: MouseEvent) => {
+				let index = 0;
+				for (let i = 0; i < this.AdonerMove.length; i++) {
+					if (this.AdonerMove[i]) {
+						index = i;
+						break;
+					}
+				}
+				if (this.AdonerMove[index]) {
+					this.Points[index].X += e.offsetX - this.AdonerPoints[index].X;
+					this.Points[index].Y += e.offsetY - this.AdonerPoints[index].Y;
+					this.AdonerPoints[index] = new Point(e.offsetX, e.offsetY);
+				}
+				this.Refresh();
+
+			}).bind(this));
+
+			parentElement.addEventListener("mouseup", ((e: MouseEvent) => {
+				for (let index = 0; index < this.AdonerMove.length; index++) {
+					this.AdonerMove[index] = false;
+				}
+			}).bind(this));
+		}		
+	}
+
+	public Refresh() {
+		const element = document.getElementById(this.id);
+		element?.setAttribute("stroke", this.stroke);
+		element?.setAttribute("stroke-width", this.strokeWidth.toString());
+		element?.setAttribute("fill", this.fill);
+		element?.setAttribute("points", this.ArrayToString(this.Points));
 	}
 
 	public Delete(): void {
