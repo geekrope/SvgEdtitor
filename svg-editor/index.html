@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Editor</title>
+  <link rel="stylesheet" href="css/main.css">
+  <script src="js/main.js" type="module" defer></script>
+</head>
+
+<body>
+  <nav>
+    <a href="index.html" class="logo">SVG Editor</a>
+    <ul class="nav">
+      <li id="saveBtn">Save</li>
+      <li id="openBtn">Open</li>
+    </ul>
+  </nav>
+
+  <aside class="create-aside">
+    <button id="createEllipseBtn" class="btn">
+      <div class="ellipse"></div>
+    </button>
+    <button id="createRectangleBtn" class="btn">
+      <div class="rectangle"></div>
+    </button>
+    <button id="pathPolyBtn" class="btn">
+      <img src="img/pathPoly.svg" draggable="false">
+    </button>
+    <button id="brushBtn" class="btn">
+      <img src="img/brush.svg" draggable="false">
+    </button>
+    <div id="bezierBtn" class="btn">
+      <img src="img/bezier4points.svg" draggable="false">
+      <div class="more">
+        <button id="bezier3PointsBtn"><img src="img/bezier3points.svg" draggable="false"></button>
+        <button id="bezier4PointsBtn"><img src="img/bezier4points.svg" draggable="false"></button>
+      </div>
+    </div>
+    <button id="smoothPathBtn" class="btn">
+      <img src="img/smoothpath.svg" draggable="false">
+    </button>
+  </aside>
+
+  <aside class="params-aside">
+    <div class="sect">
+      <div class="color-picker">
+        <label>
+          Set brush color:
+          <div class="container">
+            <input type="color" id="setBrushColorInp">
+            <button id="noBrushColorBtn" class="no-color-btn"></button>
+          </div>
+        </label>
+        <label>
+          <span>Set brush color transparent (selected <span id="selectedBrushTransparentSpan">0.5</span>):</span>
+          <input type="range" min="0" max="1" step="0.1" id="setBrushTransparentInp">
+        </label>
+      </div>
+    </div>
+    <div class="sect">
+      <div class="color-picker">
+        <label>
+          Set fill color:
+          <div class="container">
+            <input type="color" id="setFillColorInp">
+            <button id="noFillColorBtn" class="no-color-btn"></button>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="sect">
+      <div class="set-weight">
+        <label>
+          Set line weight
+          <input type="number" id="setWeightInp" min="1" max="50" value="10">
+        </label>
+      </div>
+    </div>
+  </aside>
+</body>
+
+</html>

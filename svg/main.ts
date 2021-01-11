@@ -588,7 +588,7 @@ interface Bezier {
 	Points: Point[];
 }
 enum BezierType {
-	quadratic,cubic
+	quadratic, cubic
 }
 class BezierSegment implements UIElement, Bezier {
 	public fill: string;
@@ -646,7 +646,7 @@ class BezierSegment implements UIElement, Bezier {
 						this.AdonerMove[index] = true;
 
 					}
-				}).bind(this));				
+				}).bind(this));
 			}
 
 			parentElement.addEventListener("mousemove", ((e: MouseEvent) => {
@@ -715,7 +715,7 @@ class BezierSegment implements UIElement, Bezier {
 		this.CreateAdoners();
 		this.Refresh();
 		ElementIndex++;
-	}	
+	}
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
 		if (this.Type as BezierType == BezierType.quadratic) {
@@ -723,7 +723,7 @@ class BezierSegment implements UIElement, Bezier {
 		}
 		if (this.Type as BezierType == BezierType.cubic) {
 			element?.setAttribute("d", `M${this.Points[0].X},${this.Points[0].Y} C${this.Points[1].X},${this.Points[1].Y} ${this.Points[2].X},${this.Points[2].Y} ${this.Points[3].X},${this.Points[3].Y}`);
-		}		
+		}
 		element?.setAttribute("stroke", this.stroke);
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
@@ -752,10 +752,10 @@ class BezierSegment implements UIElement, Bezier {
 }
 class Polyline implements DynamicEditable, UIElement {
 	parent: string;
-	public fill: string="none";
-	public stroke: string="black";
-	public strokeWidth: number=4;
-	Points: Point[]=[];
+	public fill: string = "none";
+	public stroke: string = "black";
+	public strokeWidth: number = 4;
+	Points: Point[] = [];
 	public id: string;
 	AdonerGroupId: string;
 	AdonerPoints: Point[] = [];
@@ -765,6 +765,7 @@ class Polyline implements DynamicEditable, UIElement {
 	adornerColor = "#53b6ee";
 	closed = false;
 	closedPolyline = false;
+	public smooth = false;
 	private CreateAdorner(id: string): SVGRectElement {
 		const adorner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 		adorner.setAttribute("width", this.adornerA.toString());
@@ -777,18 +778,19 @@ class Polyline implements DynamicEditable, UIElement {
 	}
 
 	constructor(parent: string) {
-		this.parent = parent;	
+		this.parent = parent;
 		this.id = "el" + ElementIndex;
 		this.AdonerGroupId = this.id + "_AdornerGroup";
 		let parentElement = document.getElementById(parent);
 		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-		group.id = this.AdonerGroupId;	
+		group.id = this.AdonerGroupId;
 		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		polyline.id = this.id;
 		parentElement?.appendChild(polyline);
 		parentElement?.appendChild(group);
 		parentElement?.addEventListener("mousedown", (e: MouseEvent) => { this.AddPoint(new Point(e.offsetX, e.offsetY)) });
 		ElementIndex++;
+		this.smooth = true;
 	}
 
 	private CheckCollision(adornerPoint: Point, point: Point): boolean {
@@ -803,7 +805,7 @@ class Polyline implements DynamicEditable, UIElement {
 		if (!this.closed) {
 			if (this.Points.length >= 2) {
 				let collison1 = this.CheckCollision(this.Points[0], point);
-				let collison2 = this.CheckCollision(this.Points[this.Points.length-1], point);
+				let collison2 = this.CheckCollision(this.Points[this.Points.length - 1], point);
 				if (collison1) {
 					this.closedPolyline = true;
 					this.Refresh();
@@ -814,9 +816,9 @@ class Polyline implements DynamicEditable, UIElement {
 					this.ClosePath();
 					return;
 				}
-			}			
+			}
 			this.Points.push(point);
-			let adornerId = this.id + "_Adorner_" + (this.Points.length-1);
+			let adornerId = this.id + "_Adorner_" + (this.Points.length - 1);
 			let adorner = this.CreateAdorner(adornerId);
 			adorner.setAttribute("x", (point.X - this.adornerA / 2).toString());
 			adorner.setAttribute("y", (point.Y - this.adornerA / 2).toString());
@@ -826,24 +828,48 @@ class Polyline implements DynamicEditable, UIElement {
 			let group = document.getElementById(this.AdonerGroupId);
 			group?.appendChild(adorner);
 			this.Refresh();
-		}		
+		}
+	}
+
+	private GetBezierMidPoint(p1: Point, p3: Point, intersection: Point): Point {
+		var t = 0.5;
+		var x = (intersection.X - Math.pow((1 - t), 2) * p1.X - t * t * p3.X) / (2 * (1 - t) * t);
+		var y = (intersection.Y - Math.pow((1 - t), 2) * p1.Y - t * t * p3.Y) / (2 * (1 - t) * t);
+		return new Point(x, y);
 	}
 
 	private ArrayToString(points: Point[]): string {
 		let str = "";
-		if (points.length >= 1) {
-			str = `M${points[0].X},${points[0].Y}`;
-			for (let index = 1; index < points.length; index++) {
-				str += `L${points[index].X},${points[index].Y}`;
+		if (!this.smooth) {
+			if (points.length >= 1) {
+				str = `M${points[0].X},${points[0].Y}`;
+				for (let index = 1; index < points.length; index++) {
+					str += `L${points[index].X},${points[index].Y}`;
+				}
+				if (this.closedPolyline) {
+					str += `L${points[0].X},${points[0].Y}`;
+				}
 			}
-			if (this.closedPolyline) {
-				str += `L${points[0].X},${points[0].Y}`;
+		}
+		else {
+			if (points.length >= 1) {
+				str = `M${points[0].X},${points[0].Y}`;				
+				for (let index = 0; index < points.length; index+=2) {
+					if (index + 2 < points.length) {
+						var point = this.GetBezierMidPoint(points[index], points[index + 2], points[index + 1]);
+						str += `Q${point.X},${point.Y} ${points[index + 2].X},${points[index + 2].Y}`;						
+					}
+					else {
+						str += `L${points[points.length - 1].X},${points[points.length - 1].Y}`;
+						break;
+					}					
+				}				
 			}
-		}		
+		}
 		return str;
 	}
 
-	public ClosePath(): void {		
+	public ClosePath(): void {
 		let parentElement = document.getElementById(this.parent);
 		this.closed = true;
 		for (let index = 0; index < this.Adorners.length; index++) {
@@ -884,7 +910,7 @@ class Polyline implements DynamicEditable, UIElement {
 					this.AdonerMove[index] = false;
 				}
 			}).bind(this));
-		}		
+		}
 	}
 
 	public Refresh() {
