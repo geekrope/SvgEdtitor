@@ -27,16 +27,14 @@ function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
 	let x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
-interface HasMenu {
-	HideAdorners(): void;
-	ShowAdorners(): void;
-}
 interface UIElement {
 	fill: string;
 	stroke: string;
 	strokeWidth: number;
 	Refresh(): void;
 	Delete(): void;
+	HideAdorners(): void;
+	ShowAdorners(): void;
 }
 interface DynamicEditable {
 	AddPoint(point: Point): void;
@@ -254,7 +252,7 @@ class TransformGrid {
 			this.Refresh();
 		}
 	}
-	public SetChild(element: ScaleAble): void {
+	public SetChild(element: ScaleAble|null): void {
 		if (!element) {
 			let group = document.getElementById(this.ScaleGroup);
 			if (group) {
@@ -272,7 +270,7 @@ class TransformGrid {
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
-		this.scaleY = element.scaleY;
+		this.scaleY = element.scaleY;	
 		this.Refresh();
 	}
 	public Refresh(): void {
@@ -315,6 +313,7 @@ ${this.child?.points[2].X},${this.child?.points[2].Y}
 ${this.child?.points[3].X},${this.child?.points[3].Y}`);
 	}
 }
+var MainGrid = new TransformGrid('parent');
 class Ellipse implements ScaleAble, UIElement {
 	public id: string;
 	public cx: number;
@@ -379,6 +378,13 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		}
 	}
 
+	public HideAdorners(): void {
+		MainGrid.SetChild(null);
+	}
+	public ShowAdorners(): void {
+		MainGrid.SetChild(this);
+	}
+
 	constructor(parent: string) {
 		this.parent = parent;
 		this.id = "el" + ElementIndex;
@@ -403,6 +409,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		ElementIndex++;
 	}
 	public Delete(): void {
+		this.HideAdorners();
 		const parentElement = document.getElementById(this.parent);
 		const element = document.getElementById(this.id);
 		if (element && parentElement) {
@@ -496,6 +503,13 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.points[3] = new Point(pos.X, pos.Y + DefaultA);
 	}
 
+	public HideAdorners(): void {
+		MainGrid.SetChild(null);
+	}
+	public ShowAdorners(): void {
+		MainGrid.SetChild(this);
+	}
+
 	private TransformPoints() {
 		let a = Math.cos(this.rotateAngle) * GlobalScale * this.scaleX;
 		let b = Math.sin(this.rotateAngle) * GlobalScale * this.scaleX;
@@ -540,6 +554,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		ElementIndex++;
 	}
 	public Delete(): void {
+		this.HideAdorners();
 		const parentElement = document.getElementById(this.parent);
 		const element = document.getElementById(this.id);
 		if (element && parentElement) {
@@ -594,7 +609,7 @@ interface Bezier {
 enum BezierType {
 	quadratic, cubic
 }
-class BezierSegment implements UIElement, Bezier, HasMenu {
+class BezierSegment implements UIElement, Bezier {
 	public fill: string;
 	public stroke: string;
 	public strokeWidth: number;
@@ -766,7 +781,7 @@ class BezierSegment implements UIElement, Bezier, HasMenu {
 		}
 	}
 }
-class Polyline implements DynamicEditable, UIElement, HasMenu {
+class Polyline implements DynamicEditable, UIElement {
 	parent: string;
 	public fill: string = "none";
 	public stroke: string = "black";
