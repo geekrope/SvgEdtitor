@@ -396,6 +396,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
 		this.Refresh();
+		ElementIndex++;
 	}
 	public Delete(): void {
 		const parentElement = document.getElementById(this.parent);
@@ -532,6 +533,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.center = new Point(0, 0);
 		this.SetCenter();
 		this.Refresh();
+		ElementIndex++;
 	}
 	public Delete(): void {
 		const parentElement = document.getElementById(this.parent);
@@ -712,6 +714,7 @@ class BezierSegment implements UIElement, Bezier {
 		group.appendChild(polyline);
 		this.CreateAdoners();
 		this.Refresh();
+		ElementIndex++;
 	}	
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
@@ -761,6 +764,7 @@ class Polyline implements DynamicEditable, UIElement {
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	closed = false;
+	closedPolyline = false;
 	private CreateAdorner(id: string): SVGRectElement {
 		const adorner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 		adorner.setAttribute("width", this.adornerA.toString());
@@ -779,24 +783,47 @@ class Polyline implements DynamicEditable, UIElement {
 		let parentElement = document.getElementById(parent);
 		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
 		group.id = this.AdonerGroupId;	
-		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
 		polyline.id = this.id;
 		parentElement?.appendChild(polyline);
 		parentElement?.appendChild(group);
-		parentElement?.addEventListener("mousedown", (e: MouseEvent) => { this.AddPoint(new Point(e.offsetX, e.offsetY)) })
+		parentElement?.addEventListener("mousedown", (e: MouseEvent) => { this.AddPoint(new Point(e.offsetX, e.offsetY)) });
+		ElementIndex++;
+	}
+
+	private CheckCollision(adornerPoint: Point, point: Point): boolean {
+		let adornerX = adornerPoint.X - this.adornerA / 2;
+		let adornerY = adornerPoint.Y - this.adornerA / 2;
+		let adornerX2 = adornerPoint.X + this.adornerA / 2;
+		let adornerY2 = adornerPoint.Y + this.adornerA / 2;
+		return (adornerX < point.X && adornerX2 > point.X && adornerY < point.Y && adornerY2 > point.Y);
 	}
 
 	public AddPoint(point: Point): void {
-		if (!closed) {
+		if (!this.closed) {
+			if (this.Points.length >= 2) {
+				let collison1 = this.CheckCollision(this.Points[0], point);
+				let collison2 = this.CheckCollision(this.Points[this.Points.length-1], point);
+				if (collison1) {
+					this.closedPolyline = true;
+					this.Refresh();
+					this.ClosePath();
+					return;
+				}
+				if (collison2) {
+					this.ClosePath();
+					return;
+				}
+			}			
 			this.Points.push(point);
-			let adornerId = this.id + "_Adorner_" + this.Points.length;
+			let adornerId = this.id + "_Adorner_" + (this.Points.length-1);
 			let adorner = this.CreateAdorner(adornerId);
 			adorner.setAttribute("x", (point.X - this.adornerA / 2).toString());
 			adorner.setAttribute("y", (point.Y - this.adornerA / 2).toString());
 			this.AdonerMove.push(false);
 			this.Adorners.push(adornerId);
 			this.AdonerPoints.push(new Point(0, 0));
-			var group = document.getElementById(this.AdonerGroupId);
+			let group = document.getElementById(this.AdonerGroupId);
 			group?.appendChild(adorner);
 			this.Refresh();
 		}		
@@ -804,15 +831,21 @@ class Polyline implements DynamicEditable, UIElement {
 
 	private ArrayToString(points: Point[]): string {
 		let str = "";
-		for (let index = 0; index < points.length; index++) {
-			str += `${points[index].X},${points[index].Y} `;
-		}
+		if (points.length >= 1) {
+			str = `M${points[0].X},${points[0].Y}`;
+			for (let index = 1; index < points.length; index++) {
+				str += `L${points[index].X},${points[index].Y}`;
+			}
+			if (this.closedPolyline) {
+				str += `L${points[0].X},${points[0].Y}`;
+			}
+		}		
 		return str;
 	}
 
 	public ClosePath(): void {		
 		let parentElement = document.getElementById(this.parent);
-		closed = true;
+		this.closed = true;
 		for (let index = 0; index < this.Adorners.length; index++) {
 			var element = document.getElementById(this.Adorners[index]);
 			if (element) {
@@ -859,7 +892,14 @@ class Polyline implements DynamicEditable, UIElement {
 		element?.setAttribute("stroke", this.stroke);
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
-		element?.setAttribute("points", this.ArrayToString(this.Points));
+		element?.setAttribute("d", this.ArrayToString(this.Points));
+		for (let index = 0; index < this.Points.length; index++) {
+			let adorner = document.getElementById(this.Adorners[index]);
+			if (adorner) {
+				adorner.setAttribute("x", (this.Points[index].X - this.adornerA / 2).toString());
+				adorner.setAttribute("y", (this.Points[index].Y - this.adornerA / 2).toString());
+			}
+		}
 	}
 
 	public Delete(): void {
