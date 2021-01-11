@@ -27,6 +27,10 @@ function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
 	let x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
+interface HasMenu {
+	HideAdorners(): void;
+	ShowAdorners(): void;
+}
 interface UIElement {
 	fill: string;
 	stroke: string;
@@ -590,7 +594,7 @@ interface Bezier {
 enum BezierType {
 	quadratic, cubic
 }
-class BezierSegment implements UIElement, Bezier {
+class BezierSegment implements UIElement, Bezier, HasMenu {
 	public fill: string;
 	public stroke: string;
 	public strokeWidth: number;
@@ -762,7 +766,7 @@ class BezierSegment implements UIElement, Bezier {
 		}
 	}
 }
-class Polyline implements DynamicEditable, UIElement {
+class Polyline implements DynamicEditable, UIElement, HasMenu {
 	parent: string;
 	public fill: string = "none";
 	public stroke: string = "black";
