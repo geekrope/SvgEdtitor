@@ -778,10 +778,12 @@ class Polyline implements DynamicEditable, UIElement {
 		this.AdonerGroupId = this.id + "_AdornerGroup";
 		let parentElement = document.getElementById(parent);
 		let group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-		group.id = this.AdonerGroupId;
-		parentElement?.appendChild(group);
+		group.id = this.AdonerGroupId;	
 		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
 		polyline.id = this.id;
+		parentElement?.appendChild(polyline);
+		parentElement?.appendChild(group);
+		parentElement?.addEventListener("mousedown", (e: MouseEvent) => { this.AddPoint(new Point(e.offsetX, e.offsetY)) })
 	}
 
 	public AddPoint(point: Point): void {
@@ -794,7 +796,7 @@ class Polyline implements DynamicEditable, UIElement {
 			this.AdonerMove.push(false);
 			this.Adorners.push(adornerId);
 			this.AdonerPoints.push(new Point(0, 0));
-			var group = document.getElementById("this.AdonerGroupId");
+			var group = document.getElementById(this.AdonerGroupId);
 			group?.appendChild(adorner);
 			this.Refresh();
 		}		
