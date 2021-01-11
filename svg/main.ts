@@ -749,6 +749,18 @@ class BezierSegment implements UIElement, Bezier {
 			parentElement.removeChild(poly);
 		}
 	}
+	public HideAdorners(): void {
+		const group = document.getElementById(this.AdonerGroupId);
+		if (group && closed) {
+			group.style.display = "none";
+		}
+	}
+	public ShowAdorners(): void {
+		const group = document.getElementById(this.AdonerGroupId);
+		if (group && closed) {
+			group.style.display = "inline";
+		}
+	}
 }
 class Polyline implements DynamicEditable, UIElement {
 	parent: string;
@@ -853,9 +865,13 @@ class Polyline implements DynamicEditable, UIElement {
 		}
 		else {
 			if (points.length >= 1) {
-				str = `M${points[0].X},${points[0].Y}`;				
+				str = `M${points[0].X},${points[0].Y}`;		
+				if (this.closedPolyline) {
+					points.push(points[0]);
+				}
 				for (let index = 0; index < points.length; index+=2) {
 					if (index + 2 < points.length) {
+						
 						var point = this.GetBezierMidPoint(points[index], points[index + 2], points[index + 1]);
 						str += `Q${point.X},${point.Y} ${points[index + 2].X},${points[index + 2].Y}`;						
 					}
@@ -935,6 +951,19 @@ class Polyline implements DynamicEditable, UIElement {
 		if (element && parentElement && group) {
 			parentElement.removeChild(element);
 			parentElement.removeChild(group);
+		}
+	}
+
+	public HideAdorners(): void {
+		const group = document.getElementById(this.AdonerGroupId);
+		if (group&&closed) {
+			group.style.display = "none";
+		}
+	}
+	public ShowAdorners(): void {
+		const group = document.getElementById(this.AdonerGroupId);
+		if (group && closed) {
+			group.style.display = "inline";
 		}
 	}
 }
