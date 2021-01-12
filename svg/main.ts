@@ -154,6 +154,7 @@ class TransformGrid {
 		group.appendChild(scaleY);
 		group.appendChild(scale);
 		group.appendChild(rotate);
+		group.style.display = "none";
 		parentElement?.appendChild(group);
 	}
 	private Transform(e: MouseEvent): void {
@@ -163,7 +164,6 @@ class TransformGrid {
 		this.ScaleAllAxes(e);
 		this.RotateTransform(e);
 	}
-
 	private Reset(): void {
 		this.moving = false;
 		this.scalingX = false;
