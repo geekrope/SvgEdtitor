@@ -57,7 +57,7 @@
                     Set brush color:
                     <div class="container">
                         <input type="color" onchange="ChangeSelectedElementProperties()" id="setBrushColorInp">
-                        <button id="noBrushColorBtn"  class="no-color-btn"></button>
+                        <button id="noBrushColorBtn"  class="no-color-btn" onclick="SetTransparentStroke()"></button>
                     </div>
                 </label>                
             </div>
@@ -68,7 +68,7 @@
                     Set fill color:
                     <div class="container">
                         <input type="color" value="#ffffff" onchange="ChangeSelectedElementProperties()" id="setFillColorInp">
-                        <button id="noFillColorBtn" class="no-color-btn"></button>
+                        <button id="noFillColorBtn" class="no-color-btn" onclick="SetTransparentFill()"></button>
                     </div>
                 </label>
             </div>

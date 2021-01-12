@@ -4,7 +4,7 @@ var GlobalYOffset = 0;
 var ElementIndex = 0;
 var DefaultA = 100;
 var Elements: UIElement[] = [];
-var SelectedElement: UIElement;
+var SelectedElement: UIElement | null;
 var CurrentDynamicPath: DynamicEditable;
 function getDistance(p1: Point, p2: Point): number {
 	return Math.sqrt((p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y));
@@ -1039,17 +1039,32 @@ function DeselectAll() {
 		var el = <UIElement>Elements[index];
 		el.HideAdorners();
 	}
+	SelectedElement = null;
 }
 
-function SelectElement(element: UIElement) {	
-	DeselectAll();
-	element.ShowAdorners();
+
+function SetColorMenuProperties(element: UIElement) {
 	var fill = <HTMLInputElement>document.getElementById("setFillColorInp");
 	var stroke = <HTMLInputElement>document.getElementById("setBrushColorInp");
 	var strokewidth = <HTMLInputElement>document.getElementById("setWeightInp");
-	fill.value = element.fill;
-	stroke.value = element.stroke;
+	if (element.fill.length > 7) {
+		fill.value = "#ffffff";
+	}
+	else {
+		fill.value = element.fill;
+	}
+	if (element.stroke.length > 7) {
+		stroke.value = "#ffffff";
+	}
+	else {
+		stroke.value = element.stroke;
+	}	
 	strokewidth.value = element.strokeWidth.toString();
+}
+function SelectElement(element: UIElement) {	
+	DeselectAll();
+	element.ShowAdorners();	
+	SetColorMenuProperties(element);
 }
 
 function CreateEllipse() {
@@ -1205,5 +1220,18 @@ function ChangeSelectedElementProperties() {
 		SelectedElement.fill = fillColorPicker?.value;
 		SelectedElement.strokeWidth = Number.parseFloat(weight?.value);
 		SelectedElement.Refresh();
+	}	
+}
+
+function SetTransparentFill() {
+	if (SelectedElement) {
+		SelectedElement.fill = "#00000000";
+		SetColorMenuProperties(SelectedElement);
+	}	
+}
+function SetTransparentStroke() {
+	if (SelectedElement) {
+		SelectedElement.stroke = "#00000000";
+		SetColorMenuProperties(SelectedElement);
 	}	
 }

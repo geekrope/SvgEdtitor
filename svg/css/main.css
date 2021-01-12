@@ -217,3 +217,7 @@ nav {
     right: 5px;
     bottom: 5px;
 }
+
+.create-aside .btn .more {
+    z-index: 9;
+}
