@@ -1235,3 +1235,12 @@ function SetTransparentStroke() {
 		SetColorMenuProperties(SelectedElement);
 	}	
 }
+
+function DeleteSelectedElement() {
+	if (SelectedElement) {
+		SelectedElement.Delete();
+		var index = Elements.indexOf(SelectedElement);
+		Elements.splice(index);
+		SelectedElement = null;
+	}	
+}
