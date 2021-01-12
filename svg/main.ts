@@ -413,8 +413,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetY = DefaultA;
 		this.width = DefaultA;
 		this.height = DefaultA;
-		this.fill = "none";
-		this.stroke = "black";
+		this.fill = "#00000000";
+		this.stroke = "#000000";
 		this.strokeWidth = 4;
 		this.rotateAngle = 0;
 		this.center = new Point(this.cx, this.cy);
@@ -560,8 +560,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.offsetY = DefaultA;
 		this.width = DefaultA;
 		this.height = DefaultA;
-		this.fill = "none";
-		this.stroke = "black";
+		this.fill = "#00000000";
+		this.stroke = "#000000";
 		this.strokeWidth = 4;
 		this.rotateAngle = 0;
 		this.center = new Point(0, 0);
@@ -724,8 +724,8 @@ class BezierSegment implements UIElement, Bezier {
 		this.parent = parent;
 		this.Type = type;
 		let parentElement = document.getElementById(parent);
-		this.fill = "none";
-		this.stroke = "black";
+		this.fill = "#00000000";
+		this.stroke = "#000000";
 		this.strokeWidth = 4;
 		this.id = "el" + ElementIndex;
 		this.AdonerGroupId = this.id + "_AdornerGroup";
@@ -838,6 +838,8 @@ class Polyline implements DynamicEditable, UIElement {
 
 	constructor(parent: string) {
 		this.parent = parent;
+		this.fill = "#00000000";
+		this.stroke = "#000000";
 		this.id = "el" + ElementIndex;
 		this.AdonerGroupId = this.id + "_AdornerGroup";
 		let parentElement = document.getElementById(parent);
@@ -1042,6 +1044,12 @@ function DeselectAll() {
 function SelectElement(element: UIElement) {	
 	DeselectAll();
 	element.ShowAdorners();
+	var fill = <HTMLInputElement>document.getElementById("setFillColorInp");
+	var stroke = <HTMLInputElement>document.getElementById("setBrushColorInp");
+	var strokewidth = <HTMLInputElement>document.getElementById("setWeightInp");
+	fill.value = element.fill;
+	stroke.value = element.stroke;
+	strokewidth.value = element.strokeWidth.toString();
 }
 
 function CreateEllipse() {

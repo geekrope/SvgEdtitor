@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVG Editor</title>
     <link rel="stylesheet" href="css/main.css">
-    <script src="js/main.js" type="module" defer></script>
     <script src="script/main.js"></script>
 </head>
 
@@ -60,11 +59,7 @@
                         <input type="color" onchange="ChangeSelectedElementProperties()" id="setBrushColorInp">
                         <button id="noBrushColorBtn"  class="no-color-btn"></button>
                     </div>
-                </label>
-                <label>
-                    <span>Set brush color transparent (selected <span id="selectedBrushTransparentSpan">0.5</span>):</span>
-                    <input type="range" min="0" max="1" step="0.1" id="setBrushTransparentInp">
-                </label>
+                </label>                
             </div>
         </div>
         <div class="sect">
