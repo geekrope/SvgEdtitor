@@ -871,6 +871,7 @@ class Polyline implements DynamicEditable, UIElement {
 				let collison2 = this.CheckCollision(this.Points[this.Points.length - 1], point);
 				if (collison1) {
 					this.closedPolyline = true;
+					this.Points.push(this.Points[0]);
 					this.Refresh();
 					this.ClosePath();
 					return;
@@ -916,10 +917,7 @@ class Polyline implements DynamicEditable, UIElement {
 		}
 		else {
 			if (points.length >= 1) {
-				str = `M${points[0].X},${points[0].Y}`;		
-				if (this.closedPolyline) {
-					points.push(points[0]);
-				}
+				str = `M${points[0].X},${points[0].Y}`;				
 				for (let index = 0; index < points.length; index+=2) {
 					if (index + 2 < points.length) {
 						
