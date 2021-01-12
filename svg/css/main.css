@@ -178,3 +178,10 @@ nav ul li:hover {
 	height: 27px;
 	border: 2px solid;
 }
+.result {
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+height: 100vh;
+}

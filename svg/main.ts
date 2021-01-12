@@ -265,7 +265,12 @@ class TransformGrid {
 			if (group) {
 				group.style.display = "inline";
 			}
-		}
+			var parentElement = document.getElementById(this.parent);
+			if (parentElement && group) {
+				parentElement.removeChild(group);
+				parentElement.appendChild(group);
+			}
+		}		
 		this.child = element;
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
@@ -313,9 +318,9 @@ ${this.child?.points[2].X},${this.child?.points[2].Y}
 ${this.child?.points[3].X},${this.child?.points[3].Y}`);
 	}
 }
-var MainGrid = new TransformGrid('parent');
+var MainGrid: TransformGrid;
 class Ellipse implements ScaleAble, UIElement {
-	public id: string;
+	public readonly id: string;
 	public cx: number;
 	public cy: number;
 	public width: number;
@@ -456,7 +461,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 	}
 }
 class Rectangle implements ScaleAble, UIElement {
-	public id: string;
+	public readonly id: string;
 	public cx: number;
 	public cy: number;
 	public width: number;
@@ -614,7 +619,7 @@ class BezierSegment implements UIElement, Bezier {
 	public stroke: string;
 	public strokeWidth: number;
 	public _Points: Point[];
-	public id: string;
+	public readonly id: string;
 	AdonerGroupId: string;
 	AdonerPoints: Point[] = [];
 	AdonerMove: boolean[] = [];
@@ -787,7 +792,7 @@ class Polyline implements DynamicEditable, UIElement {
 	public stroke: string = "black";
 	public strokeWidth: number = 4;
 	Points: Point[] = [];
-	public id: string;
+	public readonly id: string;
 	AdonerGroupId: string;
 	AdonerPoints: Point[] = [];
 	AdonerMove: boolean[] = [];
@@ -985,4 +990,17 @@ class Polyline implements DynamicEditable, UIElement {
 			group.style.display = "inline";
 		}
 	}
+}
+
+function ResizeResult() {
+	var svg = document.getElementById("parent");
+	var size = document.getElementById("result")?.getBoundingClientRect();
+	if (svg) {
+		svg.setAttribute("viewBox", "0,0," + size?.width+"," + size?.height);
+	}
+}
+
+function Start() {
+	MainGrid = new TransformGrid('parent');
+	ResizeResult();
 }
