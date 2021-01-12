@@ -3,6 +3,7 @@ var GlobalXOffset = 0;
 var GlobalYOffset = 0;
 var ElementIndex = 0;
 var DefaultA = 100;
+var Elements: UIElement[] = [];
 function getDistance(p1: Point, p2: Point): number {
 	return Math.sqrt((p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y));
 }
@@ -27,6 +28,9 @@ function getOriginalPoint(mtrx: DOMMatrix, transformed: Point): Point {
 	let x = (1 / a) * (x1 - c * y - e);
 	return new Point(x, y);
 }
+interface SelectionDelegate {
+	(element: UIElement): void;
+}
 interface UIElement {
 	fill: string;
 	stroke: string;
@@ -35,6 +39,7 @@ interface UIElement {
 	Delete(): void;
 	HideAdorners(): void;
 	ShowAdorners(): void;
+	OnSelected: SelectionDelegate;
 }
 interface DynamicEditable {
 	AddPoint(point: Point): void;
@@ -334,6 +339,7 @@ class Ellipse implements ScaleAble, UIElement {
 	public offsetY = 0;
 	rotateAngle: number;
 	parent: string;
+	public OnSelected: SelectionDelegate;
 	public points: Point[] = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
 	public center: Point;
 	public Refresh(): void {
@@ -412,6 +418,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.center = new Point(this.cx, this.cy);
 		this.Refresh();
 		ElementIndex++;
+		this.OnSelected = (element: UIElement) => { };
+		element.addEventListener("mousedown", ((e: MouseEvent) => { this.OnSelected(this) }).bind(this));
 	}
 	public Delete(): void {
 		this.HideAdorners();
@@ -474,6 +482,7 @@ class Rectangle implements ScaleAble, UIElement {
 	public offsetX = 0;
 	public offsetY = 0;
 	rotateAngle: number;
+	public OnSelected: SelectionDelegate;
 	parent: string;
 	public points: Point[] = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
 	public center: Point;
@@ -557,6 +566,8 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		this.SetCenter();
 		this.Refresh();
 		ElementIndex++;
+		this.OnSelected = (element: UIElement) => { };
+		element.addEventListener("mousedown", ((e: MouseEvent) => { this.OnSelected(this) }).bind(this));
 	}
 	public Delete(): void {
 		this.HideAdorners();
@@ -628,6 +639,7 @@ class BezierSegment implements UIElement, Bezier {
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	parent: string;
+	public OnSelected: SelectionDelegate;
 	Adorners: string[];
 	get Points() {
 		return this._Points;
@@ -739,6 +751,8 @@ class BezierSegment implements UIElement, Bezier {
 		this.CreateAdoners();
 		this.Refresh();
 		ElementIndex++;
+		this.OnSelected = (element: UIElement) => { };
+		element.addEventListener("mousedown", ((e: MouseEvent) => { this.OnSelected(this) }).bind(this));
 	}
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
@@ -799,6 +813,7 @@ class Polyline implements DynamicEditable, UIElement {
 	Adorners: string[] = [];
 	adornerA = 10;
 	adornerColor = "#53b6ee";
+	public OnSelected: SelectionDelegate;
 	closed = false;
 	closedPolyline = false;
 	public smooth = false;
@@ -827,6 +842,8 @@ class Polyline implements DynamicEditable, UIElement {
 		parentElement?.addEventListener("mousedown", (e: MouseEvent) => { this.AddPoint(new Point(e.offsetX, e.offsetY)) });
 		ElementIndex++;
 		this.smooth = true;
+		this.OnSelected = (element: UIElement) => { };
+		polyline.addEventListener("mousedown", ((e: MouseEvent) => { this.OnSelected(this) }).bind(this));
 	}
 
 	private CheckCollision(adornerPoint: Point, point: Point): boolean {
@@ -959,6 +976,8 @@ class Polyline implements DynamicEditable, UIElement {
 		element?.setAttribute("stroke-width", this.strokeWidth.toString());
 		element?.setAttribute("fill", this.fill);
 		element?.setAttribute("d", this.ArrayToString(this.Points));
+		element?.setAttribute("stroke-linejoin", "round");
+		element?.setAttribute("stroke-linejoin", "round");
 		for (let index = 0; index < this.Points.length; index++) {
 			let adorner = document.getElementById(this.Adorners[index]);
 			if (adorner) {
@@ -980,13 +999,13 @@ class Polyline implements DynamicEditable, UIElement {
 
 	public HideAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
-		if (group&&closed) {
+		if (group&&this.closed) {
 			group.style.display = "none";
 		}
 	}
 	public ShowAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
-		if (group && closed) {
+		if (group && this.closed) {
 			group.style.display = "inline";
 		}
 	}
@@ -1003,4 +1022,57 @@ function ResizeResult() {
 function Start() {
 	MainGrid = new TransformGrid('parent');
 	ResizeResult();
+}
+
+function DeselectAll() {
+	for (let index: number = 0; index < Elements.length; index++) {
+		var el = <UIElement>Elements[index];
+		el.HideAdorners();
+	}
+}
+
+function SelectElement(element: UIElement) {	
+	DeselectAll();
+	element.ShowAdorners();
+}
+
+function CreateEllipse() {
+	DeselectAll();
+	var el = new Ellipse('parent');
+	MainGrid.SetChild(el);
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+}
+function CreateRectangle() {
+	DeselectAll();
+	var el = new Rectangle('parent');
+	MainGrid.SetChild(el);
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+}
+function CreatePolyline() {
+	DeselectAll();
+	var el = new Polyline('parent');
+	el.smooth = false;
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+}
+function CreateQuadraticBezier() {
+	DeselectAll();
+	var el = new BezierSegment('parent', BezierType.quadratic);
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+}
+function CreateCubicBezier() {
+	DeselectAll();
+	var el = new BezierSegment('parent', BezierType.cubic);
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+}
+function CreateSmoothPath() {
+	DeselectAll();
+	var el = new Polyline('parent');
+	el.smooth = true;
+	Elements.push(el);
+	el.OnSelected = (element: UIElement) => { SelectElement(element) };
 }

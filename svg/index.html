@@ -20,13 +20,13 @@
     </nav>
 
     <aside class="create-aside">
-        <button id="createEllipseBtn" onclick="var el = new Ellipse('parent'); MainGrid.SetChild(el);" class="btn">
+        <button id="createEllipseBtn" onclick="CreateEllipse();" class="btn">
             <div class="ellipse"></div>
         </button>
-        <button id="createRectangleBtn" onclick="var el = new Rectangle('parent'); MainGrid.SetChild(el);" class="btn">
+        <button id="createRectangleBtn" onclick="CreateRectangle();" class="btn">
             <div class="rectangle"></div>
         </button>
-        <button id="pathPolyBtn" onclick="var el = new Polyline('parent');" class="btn">
+        <button id="pathPolyBtn" onclick="CreatePolyline();" class="btn">
             <img src="img/pathPoly.svg" draggable="false">
         </button>
         <button id="brushBtn" class="btn">
@@ -35,18 +35,18 @@
         <div id="bezierBtn" class="btn">
             <img src="img/bezier4points.svg" draggable="false">
             <div class="more">
-                <button onclick="var el = new BezierSegment('parent', BezierType.quadratic);" id="bezier3PointsBtn"><img src="img/bezier3points.svg" draggable="false"></button>
-                <button onclick="var el = new BezierSegment('parent', BezierType.cubic);" id="bezier4PointsBtn"><img src="img/bezier4points.svg" draggable="false"></button>
+                <button onclick="CreateQuadraticBezier();" id="bezier3PointsBtn"><img src="img/bezier3points.svg" draggable="false"></button>
+                <button onclick="CreateCubicBezier();" id="bezier4PointsBtn"><img src="img/bezier4points.svg" draggable="false"></button>
             </div>
         </div>
-        <button id="smoothPathBtn" onclick="var el = new Polyline('parent'); el.smooth=true" class="btn">
+        <button id="smoothPathBtn" onclick="CreateSmoothPath();" class="btn">
             <img src="img/smoothpath.svg" draggable="false">
         </button>
     </aside>
 
     <section id="result" class="result">
         <svg id="parent">
-            <rect width="100%" height="100%" fill="white" id="svgBackground"/>
+            <rect width="100%" height="100%" fill="white" id="svgBackground" onclick="DeselectAll()"/>
         </svg>
     </section>
 
