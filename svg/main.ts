@@ -4,6 +4,7 @@ var GlobalYOffset = 0;
 var ElementIndex = 0;
 var DefaultA = 100;
 var Elements: UIElement[] = [];
+var SelectedElement: UIElement;
 function getDistance(p1: Point, p2: Point): number {
 	return Math.sqrt((p1.X - p2.X) * (p1.X - p2.X) + (p1.Y - p2.Y) * (p1.Y - p2.Y));
 }
@@ -176,8 +177,7 @@ class TransformGrid {
 			let deltaY = e.offsetY - this.translateClickPoint.Y;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
-			this.Refresh();
-			console.log(this.child?.points[0].X + "," + this.child?.points[0].Y + " " + this.translateClickPoint.X + "," + this.translateClickPoint.Y);
+			this.Refresh();			
 		}
 	}
 	private RotateTransform(e: MouseEvent): void {
@@ -977,7 +977,7 @@ class Polyline implements DynamicEditable, UIElement {
 		element?.setAttribute("fill", this.fill);
 		element?.setAttribute("d", this.ArrayToString(this.Points));
 		element?.setAttribute("stroke-linejoin", "round");
-		element?.setAttribute("stroke-linejoin", "round");
+		element?.setAttribute("stroke-linecap", "round");
 		for (let index = 0; index < this.Points.length; index++) {
 			let adorner = document.getElementById(this.Adorners[index]);
 			if (adorner) {
@@ -1039,40 +1039,58 @@ function SelectElement(element: UIElement) {
 function CreateEllipse() {
 	DeselectAll();
 	var el = new Ellipse('parent');
+	SelectedElement = el;
 	MainGrid.SetChild(el);
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
 }
 function CreateRectangle() {
 	DeselectAll();
 	var el = new Rectangle('parent');
+	SelectedElement = el;
 	MainGrid.SetChild(el);
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
 }
 function CreatePolyline() {
 	DeselectAll();
 	var el = new Polyline('parent');
+	SelectedElement = el;
 	el.smooth = false;
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
 }
 function CreateQuadraticBezier() {
 	DeselectAll();
-	var el = new BezierSegment('parent', BezierType.quadratic);
+	var el = new BezierSegment('parent', BezierType.quadratic); 
+	SelectedElement = el;
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
 }
 function CreateCubicBezier() {
 	DeselectAll();
 	var el = new BezierSegment('parent', BezierType.cubic);
+	SelectedElement = el;
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
 }
 function CreateSmoothPath() {
 	DeselectAll();
 	var el = new Polyline('parent');
 	el.smooth = true;
+	SelectedElement = el;
 	Elements.push(el);
-	el.OnSelected = (element: UIElement) => { SelectElement(element) };
+	el.OnSelected = (element: UIElement) => { SelectElement(element); SelectedElement = element; };
+}
+
+function ChangeSelectedElementProperties() {
+	if (SelectedElement) {
+		var strokeColorPicker = <HTMLInputElement>document.getElementById("setBrushColorInp");
+		var fillColorPicker = <HTMLInputElement>document.getElementById("setFillColorInp");
+		var weight = <HTMLInputElement>document.getElementById("setWeightInp");
+		SelectedElement.stroke = strokeColorPicker?.value;
+		SelectedElement.fill = fillColorPicker?.value;
+		SelectedElement.strokeWidth = Number.parseFloat(weight?.value);
+		SelectedElement.Refresh();
+	}	
 }

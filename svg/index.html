@@ -56,8 +56,8 @@
                 <label>
                     Set brush color:
                     <div class="container">
-                        <input type="color" id="setBrushColorInp">
-                        <button id="noBrushColorBtn" class="no-color-btn"></button>
+                        <input type="color" onchange="ChangeSelectedElementProperties()" id="setBrushColorInp">
+                        <button id="noBrushColorBtn"  class="no-color-btn"></button>
                     </div>
                 </label>
                 <label>
@@ -71,7 +71,7 @@
                 <label>
                     Set fill color:
                     <div class="container">
-                        <input type="color" id="setFillColorInp">
+                        <input type="color" onchange="ChangeSelectedElementProperties()" id="setFillColorInp">
                         <button id="noFillColorBtn" class="no-color-btn"></button>
                     </div>
                 </label>
@@ -81,7 +81,7 @@
             <div class="set-weight">
                 <label>
                     Set line weight
-                    <input type="number" id="setWeightInp" min="1" max="50" value="10">
+                    <input type="number" id="setWeightInp" onchange="ChangeSelectedElementProperties()" min="0" max="50" value="4">
                 </label>
             </div>
         </div>
