@@ -791,13 +791,13 @@ class BezierSegment implements UIElement, Bezier {
 	}
 	public HideAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
-		if (group && closed) {
+		if (group) {
 			group.style.display = "none";
 		}
 	}
 	public ShowAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
-		if (group && closed) {
+		if (group) {
 			group.style.display = "inline";
 		}
 	}
