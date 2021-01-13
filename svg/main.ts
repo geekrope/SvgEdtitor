@@ -179,7 +179,7 @@ class TransformGrid {
 			let deltaY = e.offsetY - this.translateClickPoint.Y;
 			this.translateClickPoint = new Point(e.offsetX, e.offsetY);
 			this.child?.Translate(deltaX, deltaY);
-			this.Refresh();			
+			this.Refresh();
 		}
 	}
 	private RotateTransform(e: MouseEvent): void {
@@ -259,7 +259,7 @@ class TransformGrid {
 			this.Refresh();
 		}
 	}
-	public SetChild(element: ScaleAble|null): void {
+	public SetChild(element: ScaleAble | null): void {
 		if (!element) {
 			let group = document.getElementById(this.ScaleGroup);
 			if (group) {
@@ -277,12 +277,12 @@ class TransformGrid {
 				parentElement.removeChild(group);
 				parentElement.appendChild(group);
 			}
-		}		
+		}
 		this.child = element;
 		this.width = element.GetOriginalWidth() * element.scaleX;
 		this.height = element.GetOriginalHeight() * element.scaleY;
 		this.scaleX = element.scaleX;
-		this.scaleY = element.scaleY;	
+		this.scaleY = element.scaleY;
 		this.Refresh();
 	}
 	public Refresh(): void {
@@ -917,18 +917,18 @@ class Polyline implements DynamicEditable, UIElement {
 		}
 		else {
 			if (points.length >= 1) {
-				str = `M${points[0].X},${points[0].Y}`;				
-				for (let index = 0; index < points.length; index+=2) {
+				str = `M${points[0].X},${points[0].Y}`;
+				for (let index = 0; index < points.length; index += 2) {
 					if (index + 2 < points.length) {
-						
+
 						var point = this.GetBezierMidPoint(points[index], points[index + 2], points[index + 1]);
-						str += `Q${point.X},${point.Y} ${points[index + 2].X},${points[index + 2].Y}`;						
+						str += `Q${point.X},${point.Y} ${points[index + 2].X},${points[index + 2].Y}`;
 					}
 					else {
 						str += `L${points[points.length - 1].X},${points[points.length - 1].Y}`;
 						break;
-					}					
-				}				
+					}
+				}
 			}
 		}
 		return str;
@@ -1007,7 +1007,7 @@ class Polyline implements DynamicEditable, UIElement {
 
 	public HideAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
-		if (group&&this.closed) {
+		if (group && this.closed) {
 			group.style.display = "none";
 		}
 	}
@@ -1019,11 +1019,110 @@ class Polyline implements DynamicEditable, UIElement {
 	}
 }
 
+class Brush implements DynamicEditable, UIElement {
+	parent: string;
+	public fill: string = "none";
+	public stroke: string = "black";
+	public strokeWidth: number = 4;
+	Points: Point[] = [];
+	public readonly id: string;
+	public OnSelected: SelectionDelegate;
+	_closed = false;
+	openedPath = false;
+	public get closed(): boolean {
+		return this._closed;
+	}
+	public set closed(value: boolean) {
+		this._closed = value;
+	}
+	constructor(parent: string) {
+		this.parent = parent;
+		this.fill = "#00000000";
+		this.stroke = "#000000";
+		this.id = "el" + ElementIndex;
+		let parentElement = document.getElementById(parent);
+		let polyline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		polyline.id = this.id;
+		parentElement?.appendChild(polyline);
+		ElementIndex++;
+		this.OnSelected = (element: UIElement) => { };
+		polyline.addEventListener("mousedown", ((e: MouseEvent) => { this.OnSelected(this) }).bind(this));
+		parentElement?.addEventListener("mousedown", ((e: MouseEvent) => {
+			if (!closed) {
+				this.AddPoint(new Point(e.offsetX, e.offsetY));
+				this.openedPath = true;
+			}
+		}).bind(this));
+		parentElement?.addEventListener("mousemove", ((e: MouseEvent) => {
+			if (!closed && this.openedPath) {
+				this.AddPoint(new Point(e.offsetX, e.offsetY));
+			}
+		}).bind(this));
+		parentElement?.addEventListener("mouseup", ((e: MouseEvent) => { this.ClosePath(); }).bind(this));
+	}
+
+	public AddPoint(point: Point): void {
+		if (!this.closed) {
+			this.Points.push(point);
+			this.Refresh();
+		}
+	}
+
+	private GetBezierMidPoint(p1: Point, p3: Point, intersection: Point): Point {
+		var t = 0.5;
+		var x = (intersection.X - Math.pow((1 - t), 2) * p1.X - t * t * p3.X) / (2 * (1 - t) * t);
+		var y = (intersection.Y - Math.pow((1 - t), 2) * p1.Y - t * t * p3.Y) / (2 * (1 - t) * t);
+		return new Point(x, y);
+	}
+
+	private ArrayToString(points: Point[]): string {
+		let str = "";
+		if (points.length >= 1) {
+			str = `M${points[0].X},${points[0].Y}`;
+			for (let index = 1; index < points.length; index++) {
+				str += `L${points[index].X},${points[index].Y}`;
+			}
+		}
+		return str;
+	}
+
+	public ClosePath(): void {
+		this.closed = true;
+	}
+
+	public Refresh() {
+		const element = document.getElementById(this.id);
+		element?.setAttribute("stroke", this.stroke);
+		element?.setAttribute("stroke-width", this.strokeWidth.toString());
+		element?.setAttribute("fill", this.fill);
+		element?.setAttribute("d", this.ArrayToString(this.Points));
+		element?.setAttribute("stroke-linejoin", "round");
+		element?.setAttribute("stroke-linecap", "round");
+	}
+
+	public Delete(): void {
+		const parentElement = document.getElementById(this.parent);
+		const element = document.getElementById(this.id);
+		if (element && parentElement) {
+			parentElement.removeChild(element);
+		}
+	}
+
+	public HideAdorners(): void {
+		const element = document.getElementById(this.id);
+		element?.setAttribute("stroke-dasharray", "0");
+	}
+	public ShowAdorners(): void {
+		const element = document.getElementById(this.id);
+		element?.setAttribute("stroke-dasharray", "20");
+	}
+}
+
 function ResizeResult() {
 	var svg = document.getElementById("parent");
 	var size = document.getElementById("result")?.getBoundingClientRect();
 	if (svg) {
-		svg.setAttribute("viewBox", "0,0," + size?.width+"," + size?.height);
+		svg.setAttribute("viewBox", "0,0," + size?.width + "," + size?.height);
 	}
 }
 
@@ -1040,7 +1139,6 @@ function DeselectAll() {
 	SelectedElement = null;
 }
 
-
 function SetColorMenuProperties(element: UIElement) {
 	var fill = <HTMLInputElement>document.getElementById("setFillColorInp");
 	var stroke = <HTMLInputElement>document.getElementById("setBrushColorInp");
@@ -1056,12 +1154,13 @@ function SetColorMenuProperties(element: UIElement) {
 	}
 	else {
 		stroke.value = element.stroke;
-	}	
+	}
 	strokewidth.value = element.strokeWidth.toString();
 }
-function SelectElement(element: UIElement) {	
+
+function SelectElement(element: UIElement) {
 	DeselectAll();
-	element.ShowAdorners();	
+	element.ShowAdorners();
 	SetColorMenuProperties(element);
 }
 
@@ -1070,7 +1169,7 @@ function CreateEllipse() {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
 	var el = new Ellipse('parent');
 	SelectedElement = el;
@@ -1089,12 +1188,13 @@ function CreateEllipse() {
 		}
 	};
 }
+
 function CreateRectangle() {
 	if (CurrentDynamicPath != null) {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
 	var el = new Rectangle('parent');
 	SelectedElement = el;
@@ -1113,12 +1213,13 @@ function CreateRectangle() {
 		}
 	};
 }
+
 function CreatePolyline() {
 	if (CurrentDynamicPath != null) {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
 	var el = new Polyline('parent');
 	SelectedElement = el;
@@ -1138,14 +1239,15 @@ function CreatePolyline() {
 		}
 	};
 }
+
 function CreateQuadraticBezier() {
 	if (CurrentDynamicPath != null) {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
-	var el = new BezierSegment('parent', BezierType.quadratic); 
+	var el = new BezierSegment('parent', BezierType.quadratic);
 	SelectedElement = el;
 	Elements.push(el);
 	el.OnSelected = (element: UIElement) => {
@@ -1161,12 +1263,13 @@ function CreateQuadraticBezier() {
 		}
 	};
 }
+
 function CreateCubicBezier() {
 	if (CurrentDynamicPath != null) {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
 	var el = new BezierSegment('parent', BezierType.cubic);
 	SelectedElement = el;
@@ -1184,12 +1287,13 @@ function CreateCubicBezier() {
 		}
 	};
 }
+
 function CreateSmoothPath() {
 	if (CurrentDynamicPath != null) {
 		if (!CurrentDynamicPath.closed) {
 			return;
 		}
-	}	
+	}
 	DeselectAll();
 	var el = new Polyline('parent');
 	el.smooth = true;
@@ -1209,6 +1313,32 @@ function CreateSmoothPath() {
 		}
 	};
 }
+
+function CreateBrush() {
+	if (CurrentDynamicPath != null) {
+		if (!CurrentDynamicPath.closed) {
+			return;
+		}
+	}
+	DeselectAll();
+	var el = new Brush('parent');	
+	SelectedElement = el;
+	Elements.push(el);
+	CurrentDynamicPath = el;
+	el.OnSelected = (element: UIElement) => {
+		if (CurrentDynamicPath) {
+			if (CurrentDynamicPath.closed) {
+				SelectElement(element);
+				SelectedElement = element;
+			}
+		}
+		else {
+			SelectElement(element);
+			SelectedElement = element;
+		}
+	};
+}
+
 function ChangeSelectedElementProperties() {
 	if (SelectedElement) {
 		var strokeColorPicker = <HTMLInputElement>document.getElementById("setBrushColorInp");
@@ -1218,20 +1348,23 @@ function ChangeSelectedElementProperties() {
 		SelectedElement.fill = fillColorPicker?.value;
 		SelectedElement.strokeWidth = Number.parseFloat(weight?.value);
 		SelectedElement.Refresh();
-	}	
+	}
 }
 
 function SetTransparentFill() {
 	if (SelectedElement) {
 		SelectedElement.fill = "#00000000";
+		SelectedElement.Refresh();
 		SetColorMenuProperties(SelectedElement);
-	}	
+	}
 }
+
 function SetTransparentStroke() {
 	if (SelectedElement) {
 		SelectedElement.stroke = "#00000000";
+		SelectedElement.Refresh();
 		SetColorMenuProperties(SelectedElement);
-	}	
+	}
 }
 
 function DeleteSelectedElement() {
@@ -1240,5 +1373,20 @@ function DeleteSelectedElement() {
 		var index = Elements.indexOf(SelectedElement);
 		Elements.splice(index);
 		SelectedElement = null;
-	}	
+	}
+}
+
+function Serialize() {
+	var list = JSON.stringify(Elements);
+	localStorage.setItem("file", list);
+}
+function Deserialize() {
+	let str = localStorage.getItem("file");
+	if (str) {
+		var list = <UIElement[]>JSON.parse(str);
+		for (let index = 0; index < list.length; index++) {
+			var element = list[index];
+			Elements.push(element);
+		}
+	}
 }

@@ -13,8 +13,8 @@
     <nav>
         <a href="index.html" class="logo">SVG Editor</a>
         <ul class="nav">
-            <li id="saveBtn">Save</li>
-            <li id="openBtn">Open</li>
+            <li id="saveBtn" onclick="Serialize()">Save</li>
+            <li id="openBtn" onclick="Deserialize()">Open</li>
         </ul>
     </nav>
 
@@ -28,7 +28,7 @@
         <button id="pathPolyBtn" onclick="CreatePolyline();" class="btn">
             <img src="img/pathPoly.svg" draggable="false">
         </button>
-        <button id="brushBtn" class="btn">
+        <button id="brushBtn" onclick="CreateBrush()" class="btn">
             <img src="img/brush.svg" draggable="false">
         </button>
         <div id="bezierBtn" class="btn">
