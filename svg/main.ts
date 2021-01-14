@@ -42,6 +42,7 @@ interface UIElement {
 	HideAdorners(): void;
 	ShowAdorners(): void;
 	OnSelected: SelectionDelegate;
+	type: string;
 }
 interface DynamicEditable {
 	AddPoint(point: Point): void;
@@ -207,7 +208,13 @@ class TransformGrid {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
 			}
 			this.scaleXClickPoint = new Point(e.offsetX, e.offsetY);
-			this.child?.ScaleX(this.scaleX);
+			if (this.scaleX < 0) {
+				AlertIncorrectTransaformMessage();
+			}
+			else {
+				ClearIncorrectTransaformMessage();
+			}
+			this.child?.ScaleX(this.scaleX);			
 			this.Refresh();
 		}
 	}
@@ -229,6 +236,12 @@ class TransformGrid {
 				this.scaleY = this.height / this.child.GetOriginalHeight();
 			}
 			this.scaleYClickPoint = new Point(e.offsetX, e.offsetY);
+			if (this.scaleY < 0) {
+				AlertIncorrectTransaformMessage();
+			}
+			else {
+				ClearIncorrectTransaformMessage();
+			}
 			this.child?.ScaleY(this.scaleY);
 			this.Refresh();
 		}
@@ -254,6 +267,12 @@ class TransformGrid {
 				this.scaleX = this.width / this.child.GetOriginalWidth();
 			}
 			this.scaleAllClickPoint = new Point(e.offsetX, e.offsetY);
+			if (this.scaleX < 0 || this.scaleY < 0) {
+				AlertIncorrectTransaformMessage();
+			}
+			else {
+				ClearIncorrectTransaformMessage();
+			}
 			this.child?.ScaleY(this.scaleY);
 			this.child?.ScaleX(this.scaleX);
 			this.Refresh();
@@ -344,14 +363,26 @@ class Ellipse implements ScaleAble, UIElement {
 	public OnSelected: SelectionDelegate;
 	public points: Point[] = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
 	public center: Point;
+	public readonly type = "e";
 	public Refresh(): void {
 		const element = document.getElementById(this.id);
 		assert(element);
 		{
 			element.setAttribute("cx", (this.cx).toString());
 			element.setAttribute("cy", (this.cy).toString());
-			element.setAttribute("rx", (this.width / 2).toString());
-			element.setAttribute("ry", (this.height / 2).toString());
+			element.setAttribute("display", "inline");
+			if (this.width / 2 >= 0) {
+				element.setAttribute("rx", (this.width / 2).toString());
+			}
+			else {
+				element.setAttribute("display", "none");
+			}
+			if (this.height / 2 >= 0) {
+				element.setAttribute("ry", (this.height / 2).toString());
+			}
+			else {
+				element.setAttribute("display", "none");
+			}
 			element.setAttribute("fill", this.fill);
 			element.setAttribute("stroke", this.stroke);
 			element.setAttribute("stroke-width", this.strokeWidth.toString());
@@ -486,6 +517,7 @@ class Rectangle implements ScaleAble, UIElement {
 	rotateAngle: number;
 	public OnSelected: SelectionDelegate;
 	parent: string;
+	public readonly type = "r";
 	public points: Point[] = [new Point(0, 0), new Point(0, 0), new Point(0, 0), new Point(0, 0)];
 	public center: Point;
 	public Refresh(): void {
@@ -494,8 +526,19 @@ class Rectangle implements ScaleAble, UIElement {
 		{
 			element.setAttribute("x", (this.cx).toString());
 			element.setAttribute("y", (this.cy).toString());
-			element.setAttribute("width", (this.width).toString());
-			element.setAttribute("height", (this.height).toString());
+			element.setAttribute("display", "inline");
+			if (this.width / 2 >= 0) {
+				element.setAttribute("width", (this.width).toString());
+			}
+			else {
+				element.setAttribute("display", "none");
+			}
+			if (this.height / 2 >= 0) {
+				element.setAttribute("height", (this.height).toString());
+			}
+			else {
+				element.setAttribute("display", "none");
+			}
 			element.setAttribute("fill", this.fill);
 			element.setAttribute("stroke", this.stroke);
 			element.setAttribute("stroke-width", this.strokeWidth.toString());
@@ -538,7 +581,7 @@ ${this.center.Y - (this.center.Y * Math.cos(this.rotateAngle) + this.center.X * 
 		}
 	}
 
-	private SetCenter(): void {
+	public SetCenter(): void {
 		this.center = new Point(0, 0);
 		this.cx = -this.width / 2;
 		this.cy = -this.height / 2;
@@ -636,17 +679,18 @@ class BezierSegment implements UIElement, Bezier {
 	AdonerGroupId: string;
 	AdonerPoints: Point[] = [];
 	AdonerMove: boolean[] = [];
-	Type: BezierType;
+	public readonly Type: BezierType;
 	StrokePolyline: string;
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	parent: string;
 	public OnSelected: SelectionDelegate;
 	Adorners: string[];
-	get Points() {
+	public readonly type = "b";
+	public get Points() {
 		return this._Points;
 	}
-	set Points(points: Point[]) {
+	public set Points(points: Point[]) {
 		if (points.length == 3 && this.Type as BezierType == BezierType.quadratic) {
 			this._Points = points;
 		}
@@ -815,6 +859,7 @@ class Polyline implements DynamicEditable, UIElement {
 	Adorners: string[] = [];
 	adornerA = 10;
 	adornerColor = "#53b6ee";
+	public readonly type = "p";
 	public OnSelected: SelectionDelegate;
 	_closed = false;
 	closedPolyline = false;
@@ -1029,6 +1074,7 @@ class Brush implements DynamicEditable, UIElement {
 	public OnSelected: SelectionDelegate;
 	_closed = false;
 	openedPath = false;
+	public readonly type = "i";
 	public get closed(): boolean {
 		return this._closed;
 	}
@@ -1380,13 +1426,161 @@ function Serialize() {
 	var list = JSON.stringify(Elements);
 	localStorage.setItem("file", list);
 }
+
 function Deserialize() {
 	let str = localStorage.getItem("file");
 	if (str) {
 		var list = <UIElement[]>JSON.parse(str);
 		for (let index = 0; index < list.length; index++) {
 			var element = list[index];
-			Elements.push(element);
+			if (element.type == "r") {
+				let el = element as Rectangle;
+				let rect = new Rectangle('parent');
+				rect.fill = el.fill;
+				rect.stroke = el.stroke;
+				rect.strokeWidth = el.strokeWidth;
+				rect.Translate(el.offsetX - DefaultA, el.offsetY - DefaultA);
+				rect.width = el.width;
+				rect.height = el.height;
+				rect.scaleX = el.scaleX;
+				rect.scaleY = el.scaleY;
+				rect.SetCenter();
+				rect.Refresh();
+				rect.Rotate(el.rotateAngle);
+				Elements.push(rect);
+				rect.OnSelected = (element: UIElement) => {
+					if (CurrentDynamicPath) {
+						if (CurrentDynamicPath.closed) {
+							SelectElement(element);
+							SelectedElement = element;
+						}
+					}
+					else {
+						SelectElement(element);
+						SelectedElement = element;
+					}
+				};
+				rect.HideAdorners();
+			}
+			if (element.type == "e") {
+				let el = element as Ellipse;
+				let ellipse = new Ellipse('parent');
+				ellipse.fill = el.fill;
+				ellipse.stroke = el.stroke;
+				ellipse.strokeWidth = el.strokeWidth;
+				ellipse.Translate(el.offsetX - DefaultA, el.offsetY - DefaultA);
+				ellipse.width = el.width;
+				ellipse.height = el.height;
+				ellipse.scaleX = el.scaleX;
+				ellipse.scaleY = el.scaleY;				
+				ellipse.Refresh();
+				ellipse.Rotate(el.rotateAngle);
+				Elements.push(ellipse);
+				ellipse.OnSelected = (element: UIElement) => {
+					if (CurrentDynamicPath) {
+						if (CurrentDynamicPath.closed) {
+							SelectElement(element);
+							SelectedElement = element;
+						}
+					}
+					else {
+						SelectElement(element);
+						SelectedElement = element;
+					}
+				};
+				ellipse.HideAdorners();
+			}
+			if (element.type == "b") {
+				let el = element as BezierSegment;
+				let bezier = new BezierSegment('parent', el.Type);
+				bezier.fill = el.fill;
+				bezier.stroke = el.stroke;
+				bezier.strokeWidth = el.strokeWidth;							
+				bezier.Points = el._Points;
+				bezier.Refresh();
+				Elements.push(bezier);
+				bezier.OnSelected = (element: UIElement) => {
+					if (CurrentDynamicPath) {
+						if (CurrentDynamicPath.closed) {
+							SelectElement(element);
+							SelectedElement = element;
+						}
+					}
+					else {
+						SelectElement(element);
+						SelectedElement = element;
+					}
+				};
+				bezier.HideAdorners();
+			}
+			if (element.type == "p") {
+				let el = element as Polyline;
+				let path = new Polyline('parent');
+				path.fill = el.fill;
+				path.stroke = el.stroke;
+				path.strokeWidth = el.strokeWidth;
+				for (let index = 0; index < el.Points.length; index++) {
+					path.AddPoint(el.Points[index]);
+				}
+				path.smooth = el.smooth;
+				path.Refresh();
+				path.ClosePath();
+				Elements.push(path);
+				path.closedPolyline = el.closedPolyline;
+				path.OnSelected = (element: UIElement) => {
+					if (CurrentDynamicPath) {
+						if (CurrentDynamicPath.closed) {
+							SelectElement(element);
+							SelectedElement = element;
+						}
+					}
+					else {
+						SelectElement(element);
+						SelectedElement = element;
+					}
+				};
+				path.HideAdorners();
+			}
+			if (element.type == "i") {
+				let el = element as Brush;
+				let path = new Brush('parent');
+				path.fill = el.fill;
+				path.stroke = el.stroke;
+				path.strokeWidth = el.strokeWidth;
+				for (let index = 0; index < el.Points.length; index++) {
+					path.AddPoint(el.Points[index]);
+				}				
+				path.Refresh();
+				path.ClosePath();
+				Elements.push(path);
+				path.OnSelected = (element: UIElement) => {
+					if (CurrentDynamicPath) {
+						if (CurrentDynamicPath.closed) {
+							SelectElement(element);
+							SelectedElement = element;
+						}
+					}
+					else {
+						SelectElement(element);
+						SelectedElement = element;
+					}
+				};
+				path.HideAdorners();
+			}
 		}
+	}
+}
+
+function AlertIncorrectTransaformMessage() {
+	var message = document.getElementById("message");
+	if (message) {
+		message.innerText = "Некорректная матрица трансформации";	
+	}	
+}
+
+function ClearIncorrectTransaformMessage() {
+	var message = document.getElementById("message");
+	if (message) {
+		message.innerText = "";
 	}
 }

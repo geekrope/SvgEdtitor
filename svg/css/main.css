@@ -217,3 +217,11 @@ nav {
     right: 5px;
     bottom: 5px;
 }
+
+.message {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    font-family: Lato, Roboto, sans-serif;
+    color:red;
+}
