@@ -1429,10 +1429,14 @@ function Serialize() {
 
 function Deserialize() {
 	let str = localStorage.getItem("file");
+	for (let index = 0; index < Elements.length; index++) {
+		Elements[index].Delete();
+	}
+	SelectedElement = null;
 	if (str) {
-		var list = <UIElement[]>JSON.parse(str);
+		let list = <UIElement[]>JSON.parse(str);
 		for (let index = 0; index < list.length; index++) {
-			var element = list[index];
+			let element = list[index];
 			if (element.type == "r") {
 				let el = element as Rectangle;
 				let rect = new Rectangle('parent');
