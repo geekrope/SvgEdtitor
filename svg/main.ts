@@ -1056,12 +1056,13 @@ class Polyline implements DynamicEditable, UIElement {
 			group.style.display = "none";
 		}
 	}
+
 	public ShowAdorners(): void {
 		const group = document.getElementById(this.AdonerGroupId);
 		if (group && this.closed) {
 			group.style.display = "inline";
 		}
-	}
+	}	
 }
 
 class Brush implements DynamicEditable, UIElement {
