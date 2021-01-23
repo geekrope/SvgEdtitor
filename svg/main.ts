@@ -684,7 +684,7 @@ class BezierSegment implements UIElement, Bezier {
 	adornerA = 10;
 	adornerColor = "#53b6ee";
 	parent: string;
-	public OnSelected: SelectionDelegate;
+	public OnSelected: SelectionDelegate; 
 	Adorners: string[];
 	public readonly type = "b";
 	public get Points() {
